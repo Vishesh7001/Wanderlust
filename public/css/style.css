@@ -1,0 +1,104 @@
+.navbar{
+    height: 5rem;
+    background-color: white;
+}
+.fa-compass{
+    color:#fe424d;
+    font-size: 2rem;
+}
+.nav-link{
+    color:#222222 !important;
+}
+
+.listings-page{
+    padding: 1rem 0 3rem;
+}
+
+.listings-page h3{
+    margin-bottom: 1rem;
+}
+
+.listings-grid{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem 1.25rem;
+}
+
+.listing-card{
+    color: #222222;
+    text-decoration: none;
+}
+
+.listing-card-image{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: block;
+    object-fit: cover;
+    border-radius: 1rem;
+    transition: opacity 0.2s ease;
+}
+
+.listing-card:hover .listing-card-image{
+    opacity: 0.85;
+}
+
+.listing-card-body h4{
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.4rem 0 0.15rem;
+}
+
+.listing-card-body p{
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 992px){
+    .listings-grid{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px){
+    .listings-grid{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem 1rem;
+    }
+}
+
+@media (max-width: 480px){
+    .listings-grid{
+        grid-template-columns: 1fr;
+    }
+}
+
+.f-info-links a{
+    text-decoration: none;
+    color: #222222;
+}
+.f-info-links a:hover{
+    text-decoration: underline;
+}
+
+.f-info-links{
+    width: 100%;
+    text-align: center;
+}
+.f-info-socials{
+    font-size:1.2rem; 
+    width: 100%;
+    text-align: center;
+}
+.f-info-socials i{
+    font-size:1.2rem;
+    margin-right:1rem;
+}
+
+.f-info {
+    display: flex;
+    height: 5rem;
+    background-color: #ebebeb;
+    flex-wrap:wrap;
+    justify-content: center;
+    align-items: space-evenly;
+}
