@@ -1,16 +1,37 @@
-<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top">
+<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top wander-navbar">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/"><i class="fa-regular fa-compass"></i></a>
+    <a class="navbar-brand wander-brand" href="/">
+      <i class="fa-regular fa-compass"></i>
+      <span>WanderLust</span>
+    </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
-        <a class="nav-link "  href="/">Home</a>
-        <a class="nav-link" href="/listings">All Listings</a>
-        <a class="nav-link" href="/listings/new">Add new Listing </a>
+      <div class="navbar-nav wander-nav">
+        <a class="nav-link" href="/">Home</a>
+        <% if (currentUser) { %>
+          <a class="nav-link" href="/listings">All Listings</a>
+          <a class="nav-link nav-link-cta" href="/listings/new">
+            <i class="fa-solid fa-plus"></i>
+            Add new Listing
+          </a>
+          <span class="nav-user"><i class="fa-regular fa-user"></i> <%= currentUser.username %></span>
+          <button class="nav-logout" type="button" data-logout>Logout</button>
+        <% } else { %>
+          <a class="nav-link" href="/login">Login</a>
+          <a class="nav-link nav-link-cta" href="/signup">Sign up</a>
+        <% } %>
         
       </div>
     </div>
   </div>
 </nav>
+<% if (currentUser) { %>
+  <script>
+    document.querySelector("[data-logout]").addEventListener("click", async () => {
+      const response = await fetch("/logout", { method: "POST" });
+      if (response.ok) window.location.href = "/login";
+    });
+  </script>
+<% } %>

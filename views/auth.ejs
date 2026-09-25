@@ -1,0 +1,57 @@
+<% layout("layouts/boilerplate") %>
+<main class="auth-page">
+  <div class="auth-heading">
+    <p class="form-eyebrow">Join the community</p>
+    <h1>Share your stay</h1>
+    <p>Log in to leave reviews and keep your experience connected to you.</p>
+  </div>
+
+  <div class="auth-grid">
+    <form class="auth-form" data-auth-action="register">
+      <h2>Create account</h2>
+      <label for="register-username">Username</label>
+      <input id="register-username" name="username" type="text" minlength="2" required />
+      <label for="register-password">Password</label>
+      <input id="register-password" name="password" type="password" minlength="6" required />
+      <button class="form-submit" type="submit">Create account</button>
+      <p class="auth-message" data-auth-message="register"></p>
+    </form>
+
+    <form class="auth-form" data-auth-action="login">
+      <h2>Welcome back</h2>
+      <label for="login-username">Username</label>
+      <input id="login-username" name="username" type="text" required />
+      <label for="login-password">Password</label>
+      <input id="login-password" name="password" type="password" required />
+      <button class="form-submit" type="submit">Log in</button>
+      <p class="auth-message" data-auth-message="login"></p>
+    </form>
+  </div>
+</main>
+
+<script>
+  document.querySelectorAll("[data-auth-action]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const action = form.dataset.authAction;
+      const message = document.querySelector(`[data-auth-message="${action}"]`);
+      const body = Object.fromEntries(new FormData(form));
+
+      try {
+        const response = await fetch(`/auth/${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to continue.");
+        message.className = "auth-message auth-success";
+        message.textContent = `Welcome, ${result.user.username}. You can now write a review.`;
+        form.reset();
+      } catch (error) {
+        message.className = "auth-message auth-error";
+        message.textContent = error.message;
+      }
+    });
+  });
+</script>

@@ -1,29 +1,45 @@
 <% layout("layouts/boilerplate") %>
-  <body>
-    <h3>Edit your Listing</h3>
-    <form method="POST" action="/listings/<%= listing._id %>?_method=PUT">
-      <input name="listing[title]" value="<%= listing.title %>" type="text" />
-      <br /><br />
-      <textarea name="listing[description]">
-<%= listing.description %></textarea
-      >
-      <br /><br />
-      <input name="listing[image]" value="<%= listing.image %>" type="text" />
-      <br /><br />
-      <input name="listing[price]" value="<%= listing.price %>" type="number" />
-      <br /><br />
-      <input
-        name="listing[country]"
-        value="<%= listing.country %>"
-        type="text"
-      />
-      <br /><br />
-      <input
-        name="listing[location]"
-        value="<%= listing.location %>"
-        type="text"
-      />
-      <br /><br />
-      <button>Edit</button>
+  <main class="form-page">
+    <a class="back-link" href="/listings/<%= listing._id %>">
+      <i class="fa-solid fa-arrow-left"></i>
+      Back to listing
+    </a>
+    <div class="form-heading">
+      <p class="form-eyebrow">Keep your place up to date</p>
+      <h1>Edit your Listing</h1>
+      <p>Refresh the details so guests always know what to expect.</p>
+    </div>
+
+    <form class="listing-form" method="POST" action="/listings/<%= listing._id %>?_method=PUT">
+      <div class="form-field">
+        <label for="title">Title</label>
+        <input id="title" name="listing[title]" value="<%= listing.title %>" type="text" required />
+      </div>
+      <div class="form-field">
+        <label for="description">Description</label>
+        <textarea id="description" name="listing[description]" required><%= listing.description %></textarea>
+      </div>
+      <div class="form-field">
+        <label for="image">Image URL</label>
+        <input id="image" name="listing[image]" value="<%= listing.image %>" type="url" />
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="price">Price per night</label>
+          <input id="price" name="listing[price]" value="<%= listing.price %>" type="number" min="0" required />
+        </div>
+        <div class="form-field">
+          <label for="country">Country</label>
+          <input id="country" name="listing[country]" value="<%= listing.country %>" type="text" required />
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="location">Location</label>
+        <input id="location" name="listing[location]" value="<%= listing.location %>" type="text" required />
+      </div>
+      <button class="form-submit" type="submit">
+        <i class="fa-solid fa-check"></i>
+        Save changes
+      </button>
     </form>
-  </body>
+  </main>

@@ -1,17 +1,249 @@
 <% layout("layouts/boilerplate") %>
-  <body>
-    <h3>Listing Details :</h3>
-    <ul>
-      <li><%= listing.title %></li>
-      <li><%= listing.description %></li>
-      <li>&#8377; <%= listing.price.toLocaleString("en-IN") %></li>
-      <li><%= listing.location %></li>
-      <li><%= listing.country %></li>
-    </ul>
-    <br />
-    <a href="/listings/<%= listing._id %>/edit">Edit this Listing</a>
-    <br /><br />
-    <form method="POST" action="/listings/<%=listing._id%>?_method=DELETE">
-      <button>Delete this listing</button>
-    </form>
-  </body>
+  <main class="listing-detail-page">
+    <a class="back-link" href="/listings">
+      <i class="fa-solid fa-arrow-left"></i>
+      Back to all listings
+    </a>
+
+    <div class="listing-detail-header">
+      <p class="listing-eyebrow"><i class="fa-solid fa-location-dot"></i> <%= listing.location %>, <%= listing.country %></p>
+      <h1><%= listing.title %></h1>
+    </div>
+
+    <img
+      src="<%= listing.image %>"
+      alt="<%= listing.title %>"
+      class="listing-detail-image"
+    />
+
+    <section class="listing-detail-content">
+      <div class="listing-description">
+        <h2>About this place</h2>
+        <p><%= listing.description %></p>
+      </div>
+
+      <div class="listing-price">
+        <strong><span class="price-currency">&#8377;</span> <%= listing.price.toLocaleString("en-IN") %></strong>
+        <span>per night</span>
+      </div>
+    </section>
+
+    <div class="listing-actions">
+      <a class="edit-button" href="/listings/<%= listing._id %>/edit">
+        <i class="fa-solid fa-pen-to-square"></i>
+        Edit listing
+      </a>
+      <form method="POST" action="/listings/<%=listing._id%>?_method=DELETE">
+        <button class="delete-button" type="submit">
+          <i class="fa-regular fa-trash-can"></i>
+          Delete listing
+        </button>
+      </form>
+    </div>
+
+    <section class="reviews-section" aria-labelledby="reviews-title">
+      <div class="reviews-heading">
+        <p class="listing-eyebrow">Guest experiences</p>
+        <h2 id="reviews-title">Reviews</h2>
+        <p>See what guests loved about staying here.</p>
+      </div>
+
+      <div class="reviews-summary">
+        <div class="rating-overview">
+          <strong id="average-rating">4.3</strong>
+          <div class="rating-stars" id="average-stars" aria-label="Average rating: 4.3 out of 5">
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star-half-stroke"></i>
+          </div>
+          <span id="review-count">6 reviews</span>
+        </div>
+        <div class="rating-breakdown" id="rating-breakdown" aria-label="Rating breakdown"></div>
+      </div>
+
+      <div class="review-layout">
+        <div>
+          <h3 class="reviews-subtitle">Guest reviews</h3>
+          <div class="reviews-list" id="reviews-list"></div>
+        </div>
+
+        <div class="review-form-panel">
+          <h3 class="reviews-subtitle">Write a Review</h3>
+          <p class="review-form-intro">Share your experience about this place...</p>
+          <form id="review-form" class="review-form">
+            <p class="review-auth-status" id="review-auth-status">Log in before submitting a review. <a href="/auth">Log in</a></p>
+
+            <span class="review-label">Your rating</span>
+            <div class="star-selector" id="star-selector" role="radiogroup" aria-label="Choose a rating">
+              <button type="button" class="star-choice" data-rating="1" aria-label="1 star"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-choice" data-rating="2" aria-label="2 stars"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-choice" data-rating="3" aria-label="3 stars"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-choice" data-rating="4" aria-label="4 stars"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="star-choice" data-rating="5" aria-label="5 stars"><i class="fa-solid fa-star"></i></button>
+            </div>
+            <input id="review-rating" type="hidden" value="0" />
+
+            <label for="review-comment">Your review</label>
+            <textarea id="review-comment" placeholder="Share your experience about this place..." required></textarea>
+            <button class="form-submit" type="submit">
+              <i class="fa-regular fa-paper-plane"></i>
+              Submit Review
+            </button>
+            <p class="review-success" id="review-success" role="status"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const listingId = "<%= listing._id %>";
+    const reviews = [];
+
+    const reviewsList = document.querySelector("#reviews-list");
+    const averageRating = document.querySelector("#average-rating");
+    const averageStars = document.querySelector("#average-stars");
+    const reviewCount = document.querySelector("#review-count");
+    const ratingBreakdown = document.querySelector("#rating-breakdown");
+    const reviewForm = document.querySelector("#review-form");
+    const reviewRating = document.querySelector("#review-rating");
+    const reviewSuccess = document.querySelector("#review-success");
+    const reviewAuthStatus = document.querySelector("#review-auth-status");
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        "\"": "&quot;"
+      }[character]));
+    }
+
+    function starMarkup(rating) {
+      return Array.from({ length: 5 }, (_, index) => `<i class="fa-${index < rating ? "solid" : "regular"} fa-star"></i>`).join("");
+    }
+
+    function renderReviews() {
+      if (!reviews.length) {
+        reviewsList.innerHTML = '<p class="reviews-empty">No reviews yet. Be the first to share your experience.</p>';
+      } else {
+      reviewsList.innerHTML = reviews.map((review) => `
+        <article class="review-card">
+          <img class="review-avatar" src="${escapeHtml(review.avatar)}" alt="${escapeHtml(review.user)}" />
+          <div class="review-card-content">
+            <div class="review-card-topline">
+              <div>
+                <h4>${escapeHtml(review.user)}</h4>
+                <div class="review-stars" aria-label="${review.rating} out of 5 stars">${starMarkup(review.rating)}</div>
+              </div>
+              <time>${escapeHtml(review.date)}</time>
+            </div>
+            <p>${escapeHtml(review.comment)}</p>
+          </div>
+        </article>
+      `).join("");
+      }
+
+      const total = reviews.length;
+      const average = reviews.reduce((sum, review) => sum + review.rating, 0) / total;
+      averageRating.textContent = average.toFixed(1);
+      reviewCount.textContent = `${total} ${total === 1 ? "review" : "reviews"}`;
+      averageStars.setAttribute("aria-label", `Average rating: ${average.toFixed(1)} out of 5`);
+      averageStars.innerHTML = starMarkup(Math.round(average));
+
+      ratingBreakdown.innerHTML = [5, 4, 3, 2, 1].map((rating) => {
+        const count = reviews.filter((review) => review.rating === rating).length;
+        const percentage = (count / total) * 100;
+        return `<div class="rating-row"><span>${rating} stars</span><div class="rating-bar"><span style="width: ${percentage}%"></span></div><strong>${count}</strong></div>`;
+      }).join("");
+    }
+
+    async function loadReviews() {
+      reviewsList.innerHTML = '<p class="reviews-loading">Loading reviews...</p>';
+      try {
+        const response = await fetch(`/api/listings/${listingId}/reviews`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to load reviews.");
+        reviews.push(...result.reviews.map((review) => ({
+          id: review._id,
+          user: review.user.username,
+          rating: review.rating,
+          comment: review.comment,
+          date: new Date(review.createdAt).toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user.username)}&background=fde8e1&color=c24f32`
+        })));
+        renderReviews();
+      } catch (error) {
+        reviewsList.innerHTML = `<p class="reviews-error">${escapeHtml(error.message)}</p>`;
+      }
+    }
+
+    async function loadCurrentUser() {
+      const response = await fetch("/auth/me");
+      const result = await response.json();
+      if (result.user) {
+        reviewAuthStatus.textContent = `Reviewing as ${result.user.username}.`;
+        reviewAuthStatus.classList.add("is-authenticated");
+      }
+    }
+
+    document.querySelectorAll(".star-choice").forEach((button) => {
+      button.addEventListener("click", () => {
+        const selectedRating = Number(button.dataset.rating);
+        reviewRating.value = selectedRating;
+        document.querySelectorAll(".star-choice").forEach((star) => {
+          star.classList.toggle("selected", Number(star.dataset.rating) <= selectedRating);
+        });
+      });
+    });
+
+    reviewForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const comment = document.querySelector("#review-comment").value.trim();
+      const rating = Number(reviewRating.value);
+
+      if (!rating) {
+        reviewSuccess.textContent = "Please choose a star rating.";
+        reviewSuccess.classList.add("review-error");
+        return;
+      }
+
+      reviewSuccess.textContent = "Submitting review...";
+      fetch(`/api/listings/${listingId}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comment })
+      })
+        .then(async (response) => {
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Unable to submit review.");
+          return result.review;
+        })
+        .then((review) => {
+          reviews.unshift({
+            id: review._id,
+            user: review.user.username,
+            rating: review.rating,
+            comment: review.comment,
+            date: "Just now",
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user.username)}&background=fde8e1&color=c24f32`
+          });
+          renderReviews();
+          reviewForm.reset();
+          reviewRating.value = "0";
+          document.querySelectorAll(".star-choice").forEach((star) => star.classList.remove("selected"));
+          reviewSuccess.classList.remove("review-error");
+          reviewSuccess.textContent = "Review submitted successfully.";
+        })
+        .catch((error) => {
+          reviewSuccess.classList.add("review-error");
+          reviewSuccess.textContent = error.message;
+        });
+    });
+
+    loadCurrentUser().catch(() => {});
+    loadReviews();
+  </script>

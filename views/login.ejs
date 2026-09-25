@@ -1,0 +1,50 @@
+<% layout("layouts/boilerplate") %>
+<main class="auth-page auth-page-single">
+  <div class="auth-heading">
+    <p class="form-eyebrow">Welcome to WanderLust</p>
+    <h1>Find your next escape</h1>
+    <p>Log in to explore stays, share reviews, and keep your trips together.</p>
+  </div>
+
+  <form class="auth-form auth-form-centered" id="login-form">
+    <label for="login-email">Email</label>
+    <input id="login-email" type="email" autocomplete="email" required />
+    <label for="login-password">Password</label>
+    <input id="login-password" type="password" autocomplete="current-password" minlength="6" required />
+    <button class="form-submit" id="login-submit" type="submit">Login</button>
+    <p class="auth-message auth-error" id="login-message"><%= message %></p>
+    <p class="auth-switch">Don't have an account? <a href="/signup">Sign up</a></p>
+  </form>
+</main>
+
+<script>
+  const loginForm = document.querySelector("#login-form");
+  const loginButton = document.querySelector("#login-submit");
+  const loginMessage = document.querySelector("#login-message");
+  const nextPath = <%- JSON.stringify(next || "") %>;
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    loginButton.disabled = true;
+    loginButton.textContent = "Logging in...";
+    loginMessage.textContent = "";
+
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: document.querySelector("#login-email").value.trim(),
+          password: document.querySelector("#login-password").value,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to log in.");
+      window.location.href = nextPath.startsWith("/") ? nextPath : "/listings";
+    } catch (error) {
+      loginMessage.textContent = error.message;
+      loginButton.disabled = false;
+      loginButton.textContent = "Login";
+    }
+  });
+</script>
