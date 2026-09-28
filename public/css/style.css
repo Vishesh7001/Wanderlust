@@ -7,6 +7,7 @@ body{
 }
 
 .wander-navbar{
+    border-bottom: 1px solid #e9ece8 !important;
     min-height: 5rem;
     background: rgba(255, 255, 255, 0.96) !important;
     padding: 0.8rem 1.5rem;
@@ -38,7 +39,14 @@ body{
 .wander-nav{
     align-items: center;
     gap: 0.35rem;
-    margin-left: 2.5rem;
+}
+
+.wander-primary-nav{
+    margin-left: 3rem;
+}
+
+.wander-account-nav{
+    margin-left: auto;
 }
 
 .wander-nav .nav-link{
@@ -48,6 +56,13 @@ body{
     font-weight: 600;
     padding: 0.65rem 0.85rem !important;
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.wander-nav .nav-link i{
+    color: #8c9892;
+    font-size: 0.78rem;
+    margin-right: 0.3rem;
+    transition: color 0.2s ease;
 }
 
 .wander-nav .nav-link:hover{
@@ -76,28 +91,73 @@ body{
     display: inline-flex;
     font-size: 0.85rem;
     font-weight: 600;
-    gap: 0.35rem;
-    margin-left: 0.5rem;
-    padding: 0.65rem 0.35rem;
+    gap: 0.45rem;
+    margin-left: 0.8rem;
+    padding: 0.45rem 0.65rem 0.45rem 0.45rem;
+}
+
+.nav-user-avatar{
+    align-items: center;
+    background: #eef2ef;
+    border-radius: 50%;
+    color: #66736f;
+    display: inline-flex;
+    height: 1.9rem;
+    justify-content: center;
+    width: 1.9rem;
 }
 
 .nav-logout{
-    background: transparent;
-    border: 0;
+    background: #fff0ed;
+    border: 1px solid #f5d8ce;
+    border-radius: 0.45rem;
     color: #c24f32;
     cursor: pointer;
     font: inherit;
     font-size: 0.9rem;
     font-weight: 700;
-    padding: 0.65rem 0.5rem;
+    padding: 0.55rem 0.8rem;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .nav-logout:hover{
-    color: #24313a;
+    background: #c24f32;
+    color: #ffffff;
 }
 
 .listings-page{
+    position: relative;
     padding: 1rem 0 3rem;
+}
+
+.welcome-toast{
+    align-items: center;
+    animation: welcome-toast-in 0.3s ease-out;
+    background: #3c8066;
+    border: 1px solid #327055;
+    border-radius: 0.6rem;
+    box-shadow: 0 0.75rem 1.5rem rgba(36, 49, 58, 0.18);
+    color: #ffffff;
+    display: flex;
+    font-size: 0.95rem;
+    font-weight: 700;
+    left: 50%;
+    padding: 0.8rem 1.25rem;
+    position: fixed;
+    top: 6.2rem;
+    transform: translateX(-50%);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    z-index: 1050;
+}
+
+.welcome-toast-hidden{
+    opacity: 0;
+    transform: translate(-50%, -0.75rem);
+}
+
+@keyframes welcome-toast-in{
+    from { opacity: 0; transform: translate(-50%, -0.75rem); }
+    to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .listings-page h3{
@@ -112,6 +172,16 @@ body{
 
 .listing-card{
     color: #222222;
+    text-decoration: none;
+}
+
+.listing-card-link{
+    color: inherit;
+    text-decoration: none;
+}
+
+.listing-card-title{
+    color: inherit;
     text-decoration: none;
 }
 
@@ -137,16 +207,112 @@ body{
     margin: 0.7rem 0 0.3rem;
 }
 
-.listing-card-body p{
+.listing-price-row{
     align-items: center;
+    display: flex;
+    gap: 0.45rem;
+    justify-content: space-between;
+}
+
+.price-calculation{
+    align-items: center;
+    display: flex;
+    gap: 0.35rem;
+}
+
+.listing-card-price{
+    flex: 1;
+    white-space: nowrap;
+}
+
+.gst-label{
     background: #fff0ed;
     border-radius: 999px;
     color: #c24f32;
     display: inline-flex;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+    white-space: nowrap;
+}
+
+.price-plus{
+    color: #87918c;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.listing-price-row.tax-included .price-plus,
+.listing-price-row.tax-included .gst-label{
+    display: none;
+}
+
+.tax-toggle{
+    background: #24313a;
+    border: 0;
+    border-radius: 0.45rem;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.45rem 0.55rem;
+    white-space: nowrap;
+}
+
+.tax-toggle:hover{
+    background: #d95d39;
+}
+
+.listing-card-price.tax-included .price-amount{
+    color: #c24f32;
+}
+
+.listing-price-row{
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.listing-price-badge{
+    background: #fff0ed;
+    border-radius: 999px;
+    color: #c24f32;
     font-size: 0.96rem;
     font-weight: 600;
-    margin: 0.15rem 0 0;
+    margin: 0;
     padding: 0.35rem 0.7rem;
+}
+
+.gst-label{
+    background: #fff0ed;
+    border-radius: 999px;
+    color: #c24f32;
+    display: inline-flex;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.35rem 0.6rem;
+    white-space: nowrap;
+}
+
+.after-tax-button{
+    background: #24313a;
+    border: 0;
+    border-radius: 999px;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: auto;
+    padding: 0.4rem 0.65rem;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.after-tax-button:hover{
+    background: #d95d39;
+    transform: translateY(-1px);
 }
 
 .form-page{
@@ -218,6 +384,31 @@ body{
 
 .form-field input{
     height: 3rem;
+}
+
+.form-field input[type="file"]{
+    cursor: pointer;
+    height: auto;
+    padding: 0.65rem;
+}
+
+.form-field input[type="file"]::file-selector-button{
+    background: #fff0ed;
+    border: 1px solid #f5d8ce;
+    border-radius: 0.4rem;
+    color: #c24f32;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    margin-right: 0.75rem;
+    padding: 0.45rem 0.7rem;
+}
+
+.form-help{
+    color: #87918c;
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 0.4rem;
 }
 
 .form-field textarea{
@@ -434,6 +625,82 @@ body{
     padding: 2.25rem 0;
 }
 
+.location-section{
+    border-top: 1px solid #dfe4df;
+    margin-top: 1rem;
+    padding-top: 2.5rem;
+}
+
+.location-heading h2{
+    color: #24313a;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.location-heading > p:last-child{
+    color: #66736f;
+    font-size: 0.95rem;
+    margin: 0.55rem 0 1.2rem;
+}
+
+.location-heading > p:last-child i{
+    color: #d95d39;
+    margin-right: 0.3rem;
+}
+
+.listing-map{
+    border: 1px solid #e8e4dc;
+    border-radius: 1rem;
+    height: 24rem;
+    overflow: hidden;
+    width: 100%;
+}
+
+.map-missing{
+    align-items: center;
+    background: #fff3ee;
+    border: 1px solid #f5d8ce;
+    border-radius: 0.75rem;
+    color: #66736f;
+    display: flex;
+    justify-content: center;
+    min-height: 8rem;
+    padding: 1rem;
+    text-align: center;
+}
+
+.map-loading{
+    align-items: center;
+    color: #66736f;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    margin: 0;
+}
+
+.map-popup-title,
+.map-popup-location{
+    display: block;
+}
+
+.map-popup-title{
+    color: #24313a;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+}
+
+.map-popup-location{
+    color: #66736f;
+    font-size: 0.78rem;
+    margin-top: 0.2rem;
+}
+
+.map-missing code{
+    color: #c24f32;
+    margin: 0 0.25rem;
+}
+
 .listing-description{
     max-width: 42rem;
 }
@@ -540,6 +807,398 @@ body{
 .delete-button:hover{
     background: #c24f32;
     color: white;
+}
+
+.booking-panel{
+    background: #ffffff;
+    border: 1px solid #e8e4dc;
+    border-radius: 0.9rem;
+    box-shadow: 0 1rem 2rem rgba(36, 49, 58, 0.07);
+    margin-top: 2rem;
+    padding: 1.5rem;
+}
+
+.booking-heading h2{
+    color: #24313a;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.65rem;
+    margin: 0;
+}
+
+.booking-heading p:last-child{
+    color: #66736f;
+    font-size: 0.9rem;
+    margin: 0.45rem 0 1.25rem;
+}
+
+.booking-fields{
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+}
+
+.booking-field label{
+    color: #24313a;
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.booking-field input{
+    background: #fbfaf7;
+    border: 1px solid #d7ddd8;
+    border-radius: 0.45rem;
+    box-sizing: border-box;
+    color: #24313a;
+    font: inherit;
+    padding: 0.75rem;
+    width: 100%;
+}
+
+.booking-field input:focus{
+    border-color: #d95d39;
+    box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.12);
+    outline: none;
+}
+
+.booking-field .flatpickr-input,
+.booking-field input.flatpickr-input{
+    background: #fbfaf7;
+    cursor: pointer;
+}
+
+.flatpickr-calendar{
+    border: 1px solid #e8e4dc;
+    border-radius: 0.85rem;
+    box-shadow: 0 1rem 2.5rem rgba(36, 49, 58, 0.16);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+}
+
+.flatpickr-months{
+    background: #24313a;
+    padding: 0.45rem 0;
+}
+
+.flatpickr-current-month,
+.flatpickr-months .flatpickr-month,
+.flatpickr-weekdays,
+span.flatpickr-weekday{
+    background: #24313a;
+    color: #ffffff;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year{
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.flatpickr-weekdays{
+    padding-top: 0.35rem;
+}
+
+.flatpickr-day{
+    border-radius: 0.45rem;
+    color: #24313a;
+}
+
+.flatpickr-day:hover{
+    background: #fff0ed;
+    border-color: #fff0ed;
+    color: #c24f32;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover{
+    background: #d95d39;
+    border-color: #d95d39;
+    color: #ffffff;
+}
+
+.flatpickr-day.today{
+    border-color: #d95d39;
+}
+
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg{
+    fill: #ffffff;
+}
+
+.booking-summary{
+    align-items: center;
+    background: #fff3ee;
+    border: 1px solid #f5d8ce;
+    border-radius: 0.7rem;
+    color: #66736f;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.25rem;
+    padding: 1rem 1.15rem;
+}
+
+.booking-summary strong{
+    color: #c24f32;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.book-stay-button{
+    align-items: center;
+    background: #d95d39;
+    border: 0;
+    border-radius: 0.55rem;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    gap: 0.45rem;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.book-stay-button:hover:not(:disabled){
+    background: #c24f32;
+    box-shadow: 0 0.5rem 1rem rgba(194, 79, 50, 0.2);
+    transform: translateY(-2px);
+}
+
+.book-stay-button:disabled{
+    background: #d7ddd8;
+    color: #87918c;
+    cursor: not-allowed;
+}
+
+.booking-summary-details{
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.booking-summary-details span{
+    font-size: 0.9rem;
+}
+
+.booking-summary-details span:first-child{
+    color: #24313a;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.booking-message{
+    color: #3c8066;
+    font-size: 0.82rem;
+    margin: 0.65rem 0 0;
+    min-height: 1rem;
+}
+
+.booking-message.booking-error{
+    color: #c24f32;
+}
+
+.booking-details-page{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 2.5rem 0 5rem;
+}
+
+.booking-details-heading{
+    margin: 2rem 0;
+}
+
+.booking-details-heading h1{
+    color: #24313a;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin: 0;
+}
+
+.booking-details-heading > p:last-child{
+    color: #66736f;
+    margin: 0.6rem 0 0;
+}
+
+.booking-details-layout{
+    align-items: start;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.6fr);
+}
+
+.booking-details-card,
+.booking-cost-card{
+    background: #ffffff;
+    border: 1px solid #e8e4dc;
+    border-radius: 0.9rem;
+    box-shadow: 0 1rem 2.5rem rgba(36, 49, 58, 0.07);
+    padding: 1.5rem;
+}
+
+.booking-stay-preview{
+    align-items: center;
+    border-bottom: 1px solid #e8e4dc;
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 1.35rem;
+}
+
+.booking-stay-preview img{
+    border-radius: 0.6rem;
+    height: 5.5rem;
+    object-fit: cover;
+    width: 7rem;
+}
+
+.booking-stay-preview h2{
+    color: #24313a;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    margin: 0.2rem 0 0.35rem;
+}
+
+.booking-stay-preview p:last-child{
+    color: #66736f;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.booking-member-heading{
+    align-items: end;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 1.5rem 0 1.25rem;
+}
+
+.booking-member-heading h2{
+    color: #24313a;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.booking-member-heading p{
+    color: #66736f;
+    font-size: 0.85rem;
+    margin: 0.35rem 0 0;
+}
+
+.member-count-control label,
+.member-field-group label{
+    color: #24313a;
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.member-count-control select,
+.member-field-group input{
+    background: #fbfaf7;
+    border: 1px solid #d7ddd8;
+    border-radius: 0.45rem;
+    box-sizing: border-box;
+    color: #24313a;
+    font: inherit;
+    padding: 0.7rem;
+    width: 100%;
+}
+
+.member-count-control select:focus,
+.member-field-group input:focus{
+    border-color: #d95d39;
+    box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.12);
+    outline: none;
+}
+
+.member-count-control select{
+    min-width: 5rem;
+}
+
+.member-fields{
+    display: grid;
+    gap: 0.75rem;
+}
+
+.member-field-group{
+    align-items: end;
+    background: #fbfaf7;
+    border: 1px solid #e8e4dc;
+    border-radius: 0.6rem;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 2rem minmax(0, 1fr) 7rem;
+    padding: 0.85rem;
+}
+
+.member-number{
+    align-items: center;
+    background: #fff0ed;
+    border-radius: 50%;
+    color: #c24f32;
+    display: flex;
+    font-weight: 700;
+    height: 2rem;
+    justify-content: center;
+    width: 2rem;
+}
+
+.booking-confirm-button{
+    margin-top: 1.25rem;
+    width: 100%;
+}
+
+.booking-confirmation-message{
+    color: #3c8066;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0.8rem 0 0;
+    text-align: center;
+}
+
+.booking-cost-card{
+    background: #fff3ee;
+    border-color: #f5d8ce;
+    position: sticky;
+    top: 6rem;
+}
+
+.booking-cost-card h2{
+    color: #c24f32;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 2rem;
+    margin: 0.3rem 0;
+}
+
+.booking-cost-card > p:not(.listing-eyebrow){
+    color: #66736f;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.booking-cost-dates{
+    border-top: 1px solid #f5d8ce;
+    display: grid;
+    gap: 0.35rem;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+}
+
+.booking-cost-dates span{
+    color: #87918c;
+    font-size: 0.75rem;
+}
+
+.booking-cost-dates strong{
+    color: #24313a;
+    font-size: 0.85rem;
 }
 
 .reviews-section{
@@ -851,6 +1510,45 @@ body{
         padding: 1.5rem 0 0;
     }
 
+    .booking-fields{
+        grid-template-columns: 1fr;
+    }
+
+    .listing-map{
+        height: 19rem;
+    }
+
+    .booking-summary{
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .booking-summary strong{
+        margin-top: 0.55rem;
+    }
+
+    .booking-details-layout{
+        grid-template-columns: 1fr;
+    }
+
+    .booking-cost-card{
+        position: static;
+    }
+
+    .member-field-group{
+        grid-template-columns: 2rem minmax(0, 1fr);
+    }
+
+    .member-field-group > div:last-child{
+        grid-column: 2;
+    }
+
+    .book-stay-button{
+        margin-top: 0.55rem;
+        width: 100%;
+    }
+
     .reviews-section{
         margin-top: 2.5rem;
         padding-top: 2.25rem;
@@ -877,8 +1575,18 @@ body{
 
     .wander-nav{
         align-items: stretch;
-        margin-left: 0;
         padding-top: 0.75rem;
+    }
+
+    .wander-primary-nav,
+    .wander-account-nav{
+        margin-left: 0;
+    }
+
+    .wander-account-nav{
+        border-top: 1px solid #eef0ed;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
     }
 
     .wander-nav .nav-link-cta{
@@ -887,6 +1595,10 @@ body{
 
     .nav-user{
         margin-left: 0;
+    }
+
+    .nav-logout{
+        text-align: left;
     }
 }
 
@@ -938,4 +1650,8 @@ body{
     flex-wrap:wrap;
     justify-content: center;
     align-items: space-evenly;
+}
+
+.wander-nav .nav-link:hover i{
+    color: #c24f32;
 }

@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -6,11 +8,30 @@ const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const session = require("express-session");
+const multer = require("multer");
+const fs = require("fs");
 const authRoutes = require("./routes/auth.js");
 const reviewRoutes = require("./routes/reviews.js");
 const { attachUser, requirePageLogin } = require("./middleware/auth.js");
 
-const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/wanderlust";
+const uploadDirectory = path.join(__dirname, "public", "uploads");
+fs.mkdirSync(uploadDirectory, { recursive: true });
+
+const imageUpload = multer({
+  storage: multer.diskStorage({
+    destination: uploadDirectory,
+    filename: (req, file, callback) => {
+      const extension = path.extname(file.originalname).toLowerCase();
+      callback(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, callback) => {
+    if (file.mimetype.startsWith("image/")) return callback(null, true);
+    callback(new Error("Only image files are allowed."));
+  },
+});
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -53,7 +74,7 @@ app.get("/signup", (req, res) => {
 //Index Route
 app.get("/listings", requirePageLogin, async (req, res) => {
   const allListings = await Listing.find({});
-  res.render("listings/index.ejs", { allListings });
+  res.render("listings/index.ejs", { allListings, showWelcome: req.query.welcome === "1" });
 });
 
 //New Route
@@ -61,16 +82,34 @@ app.get("/listings/new", requirePageLogin, (req, res) => {
   res.render("listings/new.ejs");
 });
 
+app.get("/bookings/new", requirePageLogin, async (req, res) => {
+  const listing = await Listing.findById(req.query.listing);
+  if (!listing) return res.redirect("/listings");
+
+  res.render("bookings/new.ejs", {
+    listing,
+    checkIn: req.query.checkIn || "",
+    checkOut: req.query.checkOut || "",
+    nights: Number(req.query.nights) || 0,
+    total: Number(req.query.total) || 0,
+  });
+});
+
 //Show Route
 app.get("/listings/:id", requirePageLogin, async (req, res) => {
   let { id } = req.params;
   const listing = await Listing.findById(id);
-  res.render("listings/show.ejs", { listing });
+  res.render("listings/show.ejs", {
+    listing,
+    mapboxToken: process.env.MAPBOX_TOKEN || "",
+  });
 });
 
 //Create Route
-app.post("/listings", requirePageLogin, async (req, res) => {
-  const newListing = new Listing(req.body.listing);
+app.post("/listings", requirePageLogin, imageUpload.single("listing[image]"), async (req, res) => {
+  const listingData = { ...req.body.listing };
+  if (req.file) listingData.image = `/uploads/${req.file.filename}`;
+  const newListing = new Listing(listingData);
   await newListing.save();
   res.redirect("/listings");
 });
@@ -83,9 +122,11 @@ app.get("/listings/:id/edit", requirePageLogin, async (req, res) => {
 });
 
 //Update Route
-app.put("/listings/:id", requirePageLogin, async (req, res) => {
+app.put("/listings/:id", requirePageLogin, imageUpload.single("listing[image]"), async (req, res) => {
   let { id } = req.params;
-  await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+  const listingData = { ...req.body.listing };
+  if (req.file) listingData.image = `/uploads/${req.file.filename}`;
+  await Listing.findByIdAndUpdate(id, listingData);
   res.redirect(`/listings/${id}`);
 });
 

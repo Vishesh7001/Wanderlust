@@ -21,11 +21,19 @@
         <h2>About this place</h2>
         <p><%= listing.description %></p>
       </div>
+    </section>
 
-      <div class="listing-price">
-        <strong><span class="price-currency">&#8377;</span> <%= listing.price.toLocaleString("en-IN") %></strong>
-        <span>per night</span>
+    <section class="location-section" aria-labelledby="location-title">
+      <div class="location-heading">
+        <p class="listing-eyebrow">Find your way</p>
+        <h2 id="location-title">Where you'll be</h2>
+        <p><i class="fa-solid fa-location-dot"></i> <%= listing.location %>, <%= listing.country %></p>
       </div>
+      <% if (mapboxToken) { %>
+        <div id="listing-map" class="listing-map" data-mapbox-token="<%= mapboxToken %>" data-title="<%= listing.title %>" data-location="<%= listing.location %>, <%= listing.country %>"></div>
+      <% } else { %>
+        <div class="map-missing">Add <code>MAPBOX_TOKEN</code> to your environment to display this map.</div>
+      <% } %>
     </section>
 
     <div class="listing-actions">
@@ -40,6 +48,37 @@
         </button>
       </form>
     </div>
+
+    <section class="booking-panel" aria-labelledby="booking-title">
+      <div class="booking-heading">
+        <p class="listing-eyebrow">Plan your stay</p>
+        <h2 id="booking-title">Choose your dates</h2>
+        <p>Select how many nights you would like to book this room.</p>
+      </div>
+      <div class="booking-fields">
+        <div class="booking-field">
+          <label for="check-in">Check-in</label>
+          <input id="check-in" type="date" required />
+        </div>
+        <div class="booking-field">
+          <label for="check-out">Check-out</label>
+          <input id="check-out" type="date" required />
+        </div>
+      </div>
+      <div class="booking-summary" aria-live="polite">
+        <div class="booking-summary-details">
+          <span id="booking-nights">Select your dates to see the total</span>
+          <span id="booking-base-cost"></span>
+          <span id="booking-gst-cost"></span>
+        </div>
+        <strong id="booking-total"></strong>
+        <button class="book-stay-button" id="book-stay-button" type="button" disabled>
+          <i class="fa-solid fa-calendar-check"></i>
+          Book this stay
+        </button>
+      </div>
+      <p class="booking-message" id="booking-message" role="status"></p>
+    </section>
 
     <section class="reviews-section" aria-labelledby="reviews-title">
       <div class="reviews-heading">
@@ -111,6 +150,133 @@
     const reviewRating = document.querySelector("#review-rating");
     const reviewSuccess = document.querySelector("#review-success");
     const reviewAuthStatus = document.querySelector("#review-auth-status");
+    const checkIn = document.querySelector("#check-in");
+    const checkOut = document.querySelector("#check-out");
+    const bookingNights = document.querySelector("#booking-nights");
+    const bookingTotal = document.querySelector("#booking-total");
+    const bookingMessage = document.querySelector("#booking-message");
+    const bookStayButton = document.querySelector("#book-stay-button");
+    const nightlyPrice = Number("<%= listing.price %>");
+
+    const listingMap = document.querySelector("#listing-map");
+    if (listingMap && window.mapboxgl) {
+      const mapboxToken = listingMap.dataset.mapboxToken;
+      const locationQuery = encodeURIComponent(listingMap.dataset.location);
+      const listingTitle = listingMap.dataset.title;
+      mapboxgl.accessToken = mapboxToken;
+
+      listingMap.innerHTML = "<p class=\"map-loading\">Loading map...</p>";
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${locationQuery}.json?access_token=${mapboxToken}&limit=1`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data.features || !data.features.length) throw new Error("Location not found");
+          const [longitude, latitude] = data.features[0].center;
+          const map = new mapboxgl.Map({
+            container: listingMap,
+            style: "mapbox://styles/mapbox/streets-v12",
+            center: [longitude, latitude],
+            zoom: 10,
+          });
+          map.addControl(new mapboxgl.NavigationControl(), "top-right");
+          const markerPopup = new mapboxgl.Popup({ offset: 28 })
+            .setHTML(`<strong class="map-popup-title">${escapeHtml(listingTitle)}</strong><span class="map-popup-location">${escapeHtml(listingMap.dataset.location)}</span>`);
+          const marker = new mapboxgl.Marker({ color: "#d95d39" })
+            .setLngLat([longitude, latitude])
+            .setPopup(markerPopup)
+            .addTo(map);
+          marker.getElement().addEventListener("mouseenter", () => markerPopup.addTo(map));
+          map.on("error", () => {
+            listingMap.innerHTML = "<p class=\"map-missing\">The map could not load. Check your Mapbox token and allowed URL settings.</p>";
+          });
+        })
+        .catch(() => {
+          listingMap.innerHTML = "<p class=\"map-missing\">We couldn't find this location on the map.</p>";
+        });
+    } else if (listingMap) {
+      listingMap.innerHTML = "<p class=\"map-missing\">The map library could not load. Check your internet connection.</p>";
+    }
+
+    const today = new Date();
+    const todayValue = today.toISOString().split("T")[0];
+    checkIn.min = todayValue;
+    checkOut.min = todayValue;
+
+    if (window.flatpickr) {
+      flatpickr(checkIn, {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        altInput: true,
+        altFormat: "D, M j, Y",
+        onChange: (selectedDates, dateString) => {
+          checkOut.min = dateString || todayValue;
+          updateBookingSummary();
+        }
+      });
+      flatpickr(checkOut, {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        altInput: true,
+        altFormat: "D, M j, Y",
+        onChange: updateBookingSummary
+      });
+    }
+
+    function updateBookingSummary() {
+      if (!checkIn.value || !checkOut.value) {
+        bookingNights.textContent = "Select your dates to see the total";
+        document.querySelector("#booking-base-cost").textContent = "";
+        document.querySelector("#booking-gst-cost").textContent = "";
+        bookingTotal.textContent = "";
+        bookStayButton.disabled = true;
+        bookingMessage.textContent = "";
+        return;
+      }
+
+      const startDate = new Date(`${checkIn.value}T00:00:00`);
+      const endDate = new Date(`${checkOut.value}T00:00:00`);
+      const nights = Math.round((endDate - startDate) / 86400000);
+
+      if (nights < 1) {
+        bookingNights.textContent = "Choose a check-out date after check-in";
+        document.querySelector("#booking-base-cost").textContent = "";
+        document.querySelector("#booking-gst-cost").textContent = "";
+        bookingTotal.textContent = "";
+        bookStayButton.disabled = true;
+        bookingMessage.textContent = "Your stay must be at least one night.";
+        bookingMessage.classList.add("booking-error");
+        return;
+      }
+
+      bookingMessage.textContent = "";
+      bookingMessage.classList.remove("booking-error");
+      bookingNights.textContent = `${nights} ${nights === 1 ? "night" : "nights"}`;
+      const baseCost = nightlyPrice * nights;
+      const gstCost = Math.round(baseCost * 0.18);
+      const totalCost = baseCost + gstCost;
+      document.querySelector("#booking-base-cost").textContent = `Room: ₹ ${baseCost.toLocaleString("en-IN")}`;
+      document.querySelector("#booking-gst-cost").textContent = `18% GST: ₹ ${gstCost.toLocaleString("en-IN")}`;
+      bookingTotal.textContent = `₹ ${totalCost.toLocaleString("en-IN")}`;
+      bookStayButton.disabled = false;
+    }
+
+    checkIn.addEventListener("change", () => {
+      checkOut.min = checkIn.value || todayValue;
+      updateBookingSummary();
+    });
+    checkOut.addEventListener("change", updateBookingSummary);
+
+    bookStayButton.addEventListener("click", () => {
+      const nights = Number(bookingNights.textContent.split(" ")[0]);
+      const total = Number(bookingTotal.textContent.replace(/[^0-9]/g, ""));
+      const params = new URLSearchParams({
+        listing: listingId,
+        checkIn: checkIn.value,
+        checkOut: checkOut.value,
+        nights: String(nights),
+        total: String(total),
+      });
+      window.location.href = `/bookings/new?${params.toString()}`;
+    });
 
     function escapeHtml(value) {
       return String(value).replace(/[&<>'"]/g, (character) => ({

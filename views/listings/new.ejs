@@ -10,7 +10,7 @@
       <p>Add the details guests need to discover your place.</p>
     </div>
 
-    <form class="listing-form" method="POST" action="/listings">
+    <form class="listing-form" method="POST" action="/listings" enctype="multipart/form-data">
       <div class="form-field">
         <label for="title">Title</label>
         <input id="title" name="listing[title]" placeholder="e.g. Cozy Beachfront Cottage" type="text" required />
@@ -20,8 +20,9 @@
         <textarea id="description" name="listing[description]" placeholder="Tell guests what makes this place special" required></textarea>
       </div>
       <div class="form-field">
-        <label for="image">Image URL</label>
-        <input id="image" name="listing[image]" placeholder="https://example.com/your-image.jpg" type="url" />
+        <label for="image">Property image</label>
+        <input id="image" name="listing[image]" type="file" accept="image/*" required />
+        <span class="form-help">Upload a JPG, PNG, WEBP, or other image up to 5 MB.</span>
       </div>
       <div class="form-row">
         <div class="form-field">

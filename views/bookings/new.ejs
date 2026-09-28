@@ -1,0 +1,92 @@
+<% layout("layouts/boilerplate") %>
+<main class="booking-details-page">
+  <a class="back-link" href="/listings/<%= listing._id %>">
+    <i class="fa-solid fa-arrow-left"></i>
+    Back to listing
+  </a>
+
+  <div class="booking-details-heading">
+    <p class="form-eyebrow">Almost there</p>
+    <h1>Confirm your stay</h1>
+    <p>Tell us who will be staying so we can prepare your booking details.</p>
+  </div>
+
+  <div class="booking-details-layout">
+    <section class="booking-details-card">
+      <div class="booking-stay-preview">
+        <img src="<%= listing.image %>" alt="<%= listing.title %>" />
+        <div>
+          <p class="listing-eyebrow"><%= listing.location %>, <%= listing.country %></p>
+          <h2><%= listing.title %></h2>
+          <p><%= checkIn %> to <%= checkOut %> · <%= nights %> <%= nights === 1 ? "night" : "nights" %></p>
+        </div>
+      </div>
+
+      <form id="booking-details-form" class="booking-details-form">
+        <div class="booking-member-heading">
+          <div>
+            <h2>Who's coming?</h2>
+            <p>Add the name and age of every guest.</p>
+          </div>
+          <div class="member-count-control">
+            <label for="member-count">Members</label>
+            <select id="member-count">
+              <% for (let count = 1; count <= 12; count++) { %>
+                <option value="<%= count %>"><%= count %></option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+
+        <div id="member-fields" class="member-fields"></div>
+        <button class="form-submit booking-confirm-button" type="submit">
+          <i class="fa-solid fa-check"></i>
+          Confirm booking details
+        </button>
+        <p class="booking-confirmation-message" id="booking-confirmation-message" role="status"></p>
+      </form>
+    </section>
+
+    <aside class="booking-cost-card">
+      <p class="listing-eyebrow">Your price</p>
+      <h2><span class="price-currency">&#8377;</span> <%= total.toLocaleString("en-IN") %></h2>
+      <p><%= nights %> <%= nights === 1 ? "night" : "nights" %> including 18% GST</p>
+      <div class="booking-cost-dates">
+        <span>Check-in</span><strong><%= checkIn %></strong>
+        <span>Check-out</span><strong><%= checkOut %></strong>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script>
+  const memberCount = document.querySelector("#member-count");
+  const memberFields = document.querySelector("#member-fields");
+  const bookingDetailsForm = document.querySelector("#booking-details-form");
+  const bookingConfirmationMessage = document.querySelector("#booking-confirmation-message");
+
+  function renderMemberFields() {
+    const count = Number(memberCount.value);
+    memberFields.innerHTML = Array.from({ length: count }, (_, index) => `
+      <div class="member-field-group">
+        <span class="member-number">${index + 1}</span>
+        <div>
+          <label for="member-name-${index}">Full name</label>
+          <input id="member-name-${index}" name="memberName" type="text" placeholder="Enter member name" required />
+        </div>
+        <div>
+          <label for="member-age-${index}">Age</label>
+          <input id="member-age-${index}" name="memberAge" type="number" min="0" max="120" placeholder="Age" required />
+        </div>
+      </div>
+    `).join("");
+  }
+
+  memberCount.addEventListener("change", renderMemberFields);
+  bookingDetailsForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    bookingConfirmationMessage.classList.remove("booking-error");
+    bookingConfirmationMessage.textContent = "Booking details confirmed successfully.";
+  });
+  renderMemberFields();
+</script>

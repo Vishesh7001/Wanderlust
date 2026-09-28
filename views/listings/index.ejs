@@ -1,19 +1,59 @@
 <% layout("layouts/boilerplate") %>
 <div class="listings-page">
-  <h3>All Listings</h3>
+  <% if (showWelcome) { %>
+    <div class="welcome-toast" role="status">Welcome to WanderLust</div>
+  <% } %>
   <div class="listings-grid">
     <% for(let listing of allListings) { %>
-    <a class="listing-card" href="/listings/<%= listing._id %>">
+    <article class="listing-card" data-price="<%= listing.price %>">
       <img
         src="<%= listing.image %>"
         alt="<%= listing.title %>"
         class="listing-card-image"
       />
       <div class="listing-card-body">
-        <h4><%= listing.title %></h4>
-        <p>&#8377; <%= listing.price.toLocaleString("en-IN") %>/ night</p>
+        <a class="listing-card-title" href="/listings/<%= listing._id %>">
+          <h4><%= listing.title %></h4>
+        </a>
+        <div class="listing-price-row">
+          <div class="price-calculation">
+            <p class="listing-price-badge">&#8377; <span class="listing-price-value"><%= listing.price.toLocaleString("en-IN") %></span>/ night</p>
+            <span class="price-plus">+</span>
+            <span class="gst-label">18% GST</span>
+          </div>
+          <button class="tax-toggle" type="button" aria-pressed="false">After tax</button>
+        </div>
       </div>
-    </a>
+    </article>
     <% } %>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll(".listing-card").forEach((card) => {
+    const basePrice = Number(card.dataset.price);
+    const priceValue = card.querySelector(".listing-price-value");
+    const priceBadge = card.querySelector(".listing-price-badge");
+    const button = card.querySelector(".tax-toggle");
+
+    button.addEventListener("click", () => {
+      const showingAfterTax = button.getAttribute("aria-pressed") === "true";
+      const priceRow = button.closest(".listing-price-row");
+      const displayedPrice = showingAfterTax ? basePrice : Math.round(basePrice * 1.18);
+      priceValue.textContent = displayedPrice.toLocaleString("en-IN");
+      button.textContent = showingAfterTax ? "After tax" : "Before tax";
+      button.setAttribute("aria-pressed", String(!showingAfterTax));
+      priceBadge.classList.toggle("tax-included", !showingAfterTax);
+      priceRow.classList.toggle("tax-included", !showingAfterTax);
+    });
+  });
+</script>
+
+<% if (showWelcome) { %>
+  <script>
+    window.setTimeout(() => {
+      const welcomeToast = document.querySelector(".welcome-toast");
+      if (welcomeToast) welcomeToast.classList.add("welcome-toast-hidden");
+    }, 3500);
+  </script>
+<% } %>

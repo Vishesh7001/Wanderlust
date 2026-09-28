@@ -10,7 +10,7 @@
       <p>Refresh the details so guests always know what to expect.</p>
     </div>
 
-    <form class="listing-form" method="POST" action="/listings/<%= listing._id %>?_method=PUT">
+    <form class="listing-form" method="POST" action="/listings/<%= listing._id %>?_method=PUT" enctype="multipart/form-data">
       <div class="form-field">
         <label for="title">Title</label>
         <input id="title" name="listing[title]" value="<%= listing.title %>" type="text" required />
@@ -20,8 +20,9 @@
         <textarea id="description" name="listing[description]" required><%= listing.description %></textarea>
       </div>
       <div class="form-field">
-        <label for="image">Image URL</label>
-        <input id="image" name="listing[image]" value="<%= listing.image %>" type="url" />
+        <label for="image">Replace property image</label>
+        <input id="image" name="listing[image]" type="file" accept="image/*" />
+        <span class="form-help">Leave empty to keep the current image.</span>
       </div>
       <div class="form-row">
         <div class="form-field">
