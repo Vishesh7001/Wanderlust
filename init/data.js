@@ -293,4 +293,40 @@ const sampleListings = [
   },
 ];
 
+const listingDetails = {
+  "Cozy Beachfront Cottage": { propertyType: "House", bedrooms: 2, bathrooms: 1, amenities: ["Wifi", "Kitchen", "Beach access"] },
+  "Modern Loft in Downtown": { propertyType: "Apartment", bedrooms: 1, bathrooms: 1, amenities: ["Wifi", "Workspace", "Elevator"] },
+  "Mountain Retreat": { propertyType: "Cabin", bedrooms: 3, bathrooms: 2, amenities: ["Fireplace", "Wifi", "Parking", "Hiking trails"] },
+  "Historic Villa in Tuscany": { propertyType: "Villa", bedrooms: 4, bathrooms: 3, amenities: ["Pool", "Kitchen", "Garden", "Vineyard views"] },
+  "Secluded Treehouse Getaway": { propertyType: "Other", bedrooms: 1, bathrooms: 1, amenities: ["Wifi", "Forest views", "Outdoor deck"] },
+  "Beachfront Paradise": { propertyType: "Apartment", bedrooms: 2, bathrooms: 2, amenities: ["Pool", "Wifi", "Beach access"] },
+  "Rustic Cabin by the Lake": { propertyType: "Cabin", bedrooms: 2, bathrooms: 1, amenities: ["Fireplace", "Kayaks", "Lake access"] },
+  "Luxury Penthouse with City Views": { propertyType: "Apartment", bedrooms: 3, bathrooms: 3, amenities: ["Pool", "Gym", "Wifi", "City views"] },
+  "Ski-In/Ski-Out Chalet": { propertyType: "Cabin", bedrooms: 4, bathrooms: 3, amenities: ["Fireplace", "Hot tub", "Ski storage"] },
+  "Safari Lodge in the Serengeti": { propertyType: "Guesthouse", bedrooms: 2, bathrooms: 1, amenities: ["Breakfast", "Guided safari", "Wildlife views"] },
+  "Historic Canal House": { propertyType: "House", bedrooms: 3, bathrooms: 2, amenities: ["Wifi", "Kitchen", "Canal views"] },
+  "Private Island Retreat": { propertyType: "Villa", bedrooms: 6, bathrooms: 5, amenities: ["Private pool", "Beach access", "Kitchen", "Boat transfer"] },
+  "Charming Cottage in the Cotswolds": { propertyType: "House", bedrooms: 2, bathrooms: 1, amenities: ["Garden", "Fireplace", "Kitchen"] },
+  "Historic Brownstone in Boston": { propertyType: "House", bedrooms: 3, bathrooms: 2, amenities: ["Wifi", "Kitchen", "Workspace"] },
+  "Beachfront Bungalow in Bali": { propertyType: "Guesthouse", bedrooms: 2, bathrooms: 2, amenities: ["Private pool", "Beach access", "Air conditioning"] },
+  "Mountain View Cabin in Banff": { propertyType: "Cabin", bedrooms: 3, bathrooms: 2, amenities: ["Fireplace", "Parking", "Hiking trails"] },
+  "Art Deco Apartment in Miami": { propertyType: "Apartment", bedrooms: 2, bathrooms: 1, amenities: ["Wifi", "Kitchen", "Beach access"] },
+  "Tropical Villa in Phuket": { propertyType: "Villa", bedrooms: 4, bathrooms: 4, amenities: ["Infinity pool", "Air conditioning", "Wifi"] },
+  "Historic Castle in Scotland": { propertyType: "House", bedrooms: 8, bathrooms: 5, amenities: ["Garden", "Fireplace", "Parking", "Historic grounds"] },
+  "Desert Oasis in Dubai": { propertyType: "Villa", bedrooms: 5, bathrooms: 4, amenities: ["Private pool", "Air conditioning", "Wifi", "Desert views"] },
+  "Rustic Log Cabin in Montana": { propertyType: "Cabin", bedrooms: 3, bathrooms: 2, amenities: ["Fireplace", "Parking", "Barbecue"] },
+  "Beachfront Villa in Greece": { propertyType: "Villa", bedrooms: 4, bathrooms: 3, amenities: ["Pool", "Beach access", "Kitchen", "Sea views"] },
+  "Eco-Friendly Treehouse Retreat": { propertyType: "Other", bedrooms: 1, bathrooms: 1, amenities: ["Solar power", "Forest views", "Nature trails"] },
+  "Historic Cottage in Charleston": { propertyType: "House", bedrooms: 3, bathrooms: 2, amenities: ["Garden", "Kitchen", "Wifi"] },
+  "Modern Apartment in Tokyo": { propertyType: "Apartment", bedrooms: 2, bathrooms: 1, amenities: ["Wifi", "Workspace", "Transit access"] },
+  "Lakefront Cabin in New Hampshire": { propertyType: "Cabin", bedrooms: 3, bathrooms: 2, amenities: ["Fireplace", "Kayaks", "Lake access"] },
+  "Luxury Villa in the Maldives": { propertyType: "Villa", bedrooms: 2, bathrooms: 2, amenities: ["Private pool", "Beach access", "Breakfast", "Ocean views"] },
+  "Ski Chalet in Aspen": { propertyType: "Cabin", bedrooms: 5, bathrooms: 4, amenities: ["Fireplace", "Hot tub", "Ski storage"] },
+  "Secluded Beach House in Costa Rica": { propertyType: "House", bedrooms: 3, bathrooms: 2, amenities: ["Surfboard", "Beach access", "Outdoor shower"] },
+};
+
+for (const listing of sampleListings) {
+  Object.assign(listing, listingDetails[listing.title]);
+}
+
 module.exports = { data: sampleListings };

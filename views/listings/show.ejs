@@ -10,16 +10,35 @@
       <h1><%= listing.title %></h1>
     </div>
 
+    <% const displayImages = listing.images && listing.images.length ? listing.images : [listing.image]; %>
     <img
-      src="<%= listing.image %>"
+      src="<%= displayImages[0] %>"
       alt="<%= listing.title %>"
       class="listing-detail-image"
     />
+    <% if (displayImages.length > 1) { %>
+      <div class="listing-detail-gallery">
+        <% for (const image of displayImages.slice(1)) { %><img src="<%= image %>" alt="<%= listing.title %>" loading="lazy" /><% } %>
+      </div>
+    <% } %>
 
     <section class="listing-detail-content">
       <div class="listing-description">
         <h2>About this place</h2>
         <p><%= listing.description %></p>
+        <dl class="listing-facts">
+          <div><dt>Property type</dt><dd><%= listing.propertyType || "Other" %></dd></div>
+          <div><dt>Bedrooms</dt><dd><%= listing.bedrooms ?? "Not specified" %></dd></div>
+          <div><dt>Bathrooms</dt><dd><%= listing.bathrooms ?? "Not specified" %></dd></div>
+        </dl>
+        <% if (listing.amenities && listing.amenities.length) { %>
+          <h3 class="amenities-heading">What this place offers</h3>
+          <ul class="listing-amenities"><% for (const amenity of listing.amenities) { %><li><i class="fa-solid fa-check"></i> <%= amenity %></li><% } %></ul>
+        <% } %>
+      </div>
+      <div class="listing-price">
+        <strong><span class="price-currency">&#8377;</span> <%= Number(listing.price || 0).toLocaleString("en-IN") %></strong>
+        <span>per night</span>
       </div>
     </section>
 
@@ -36,48 +55,75 @@
       <% } %>
     </section>
 
-    <div class="listing-actions">
-      <a class="edit-button" href="/listings/<%= listing._id %>/edit">
-        <i class="fa-solid fa-pen-to-square"></i>
-        Edit listing
-      </a>
-      <form method="POST" action="/listings/<%=listing._id%>?_method=DELETE">
-        <button class="delete-button" type="submit">
-          <i class="fa-regular fa-trash-can"></i>
-          Delete listing
-        </button>
-      </form>
-    </div>
+    <% if (isOwner) { %>
+      <div class="listing-actions">
+        <a class="edit-button" href="/listings/<%= listing._id %>/edit"><i class="fa-solid fa-pen-to-square"></i> Edit listing</a>
+        <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" onsubmit="return confirm('Delete this listing? This cannot be undone.');">
+          <button class="delete-button" type="submit"><i class="fa-regular fa-trash-can"></i> Delete listing</button>
+        </form>
+      </div>
+    <% } %>
 
-    <section class="booking-panel" aria-labelledby="booking-title">
+    <section class="booking-panel" aria-labelledby="booking-title" data-max-guests="<%= listing.maxGuests || 2 %>" data-is-owner="<%= isOwner ? "true" : "false" %>">
       <div class="booking-heading">
         <p class="listing-eyebrow">Plan your stay</p>
         <h2 id="booking-title">Choose your dates</h2>
-        <p>Select how many nights you would like to book this room.</p>
+        <p>Choose dates and guests. Availability and pricing are checked by the server.</p>
       </div>
       <div class="booking-fields">
         <div class="booking-field">
           <label for="check-in">Check-in</label>
-          <input id="check-in" type="date" required />
+          <div class="booking-date-control">
+            <input id="check-in" type="text" value="<%= selectedCheckIn || "" %>" placeholder="Select date" autocomplete="off" required />
+            <button class="date-picker-trigger" id="open-check-in" type="button" aria-label="Open check-in calendar" title="Open calendar"><i class="fa-regular fa-calendar"></i></button>
+          </div>
         </div>
         <div class="booking-field">
           <label for="check-out">Check-out</label>
-          <input id="check-out" type="date" required />
+          <div class="booking-date-control">
+            <input id="check-out" type="text" value="<%= selectedCheckOut || "" %>" placeholder="Select date" autocomplete="off" required />
+            <button class="date-picker-trigger" id="open-check-out" type="button" aria-label="Open check-out calendar" title="Open calendar"><i class="fa-regular fa-calendar"></i></button>
+          </div>
+        </div>
+        <div class="booking-field">
+          <label for="booking-guests">Guests</label>
+          <select id="booking-guests"><% for (let guestCount = 1; guestCount <= (listing.maxGuests || 2); guestCount++) { %><option value="<%= guestCount %>"><%= guestCount %> <%= guestCount === 1 ? "guest" : "guests" %></option><% } %></select>
         </div>
       </div>
       <div class="booking-summary" aria-live="polite">
         <div class="booking-summary-details">
-          <span id="booking-nights">Select your dates to see the total</span>
+          <span id="booking-nights">Select dates to check availability</span>
           <span id="booking-base-cost"></span>
           <span id="booking-gst-cost"></span>
+          <span id="booking-cleaning-cost"></span>
+          <span id="booking-service-cost"></span>
         </div>
         <strong id="booking-total"></strong>
         <button class="book-stay-button" id="book-stay-button" type="button" disabled>
-          <i class="fa-solid fa-calendar-check"></i>
-          Book this stay
+          <i class="fa-solid fa-lock"></i>
+          Continue to test payment
         </button>
       </div>
       <p class="booking-message" id="booking-message" role="status"></p>
+      <dialog class="test-payment-dialog" id="test-payment-dialog" aria-labelledby="test-payment-title">
+        <button class="test-payment-close" id="test-payment-close" type="button" aria-label="Close test payment">×</button>
+        <p class="demo-payment-note">TEST PAYMENT · NO REAL MONEY</p>
+        <h2 id="test-payment-title">Payment</h2>
+        <p class="test-payment-property"><%= listing.title %></p>
+        <div class="test-payment-breakdown">
+          <span id="test-payment-nights">Stay</span><strong id="test-payment-subtotal"></strong>
+          <span>GST (18%)</span><strong id="test-payment-gst"></strong>
+          <span>Cleaning fee</span><strong id="test-payment-cleaning"></strong>
+          <span>Service fee</span><strong id="test-payment-service"></strong>
+          <span class="test-payment-total-label">Total</span><strong class="test-payment-total" id="test-payment-total"></strong>
+        </div>
+        <p class="test-payment-message" id="test-payment-message" role="status">Project payment simulation. No charge will be made.</p>
+        <div class="test-payment-actions">
+          <button class="form-submit" id="test-payment-pay" type="button">Pay test amount</button>
+          <button class="delete-button" id="test-payment-fail" type="button">Simulate failure</button>
+          <button class="clear-filters" id="test-payment-cancel" type="button">Cancel</button>
+        </div>
+      </dialog>
     </section>
 
     <section class="reviews-section" aria-labelledby="reviews-title">
@@ -150,13 +196,223 @@
     const reviewRating = document.querySelector("#review-rating");
     const reviewSuccess = document.querySelector("#review-success");
     const reviewAuthStatus = document.querySelector("#review-auth-status");
+    const bookingPanel = document.querySelector(".booking-panel");
     const checkIn = document.querySelector("#check-in");
     const checkOut = document.querySelector("#check-out");
+    const bookingGuests = document.querySelector("#booking-guests");
     const bookingNights = document.querySelector("#booking-nights");
     const bookingTotal = document.querySelector("#booking-total");
     const bookingMessage = document.querySelector("#booking-message");
     const bookStayButton = document.querySelector("#book-stay-button");
-    const nightlyPrice = Number("<%= listing.price %>");
+    const testPaymentDialog = document.querySelector("#test-payment-dialog");
+    const maxGuests = Number(bookingPanel.dataset.maxGuests);
+    const isOwner = bookingPanel.dataset.isOwner === "true";
+    const unavailableDateKeys = new Set();
+    let selectedPrice = null;
+    let pendingTestOrder = null;
+    let paymentResolved = false;
+    let checkInPicker;
+    let checkOutPicker;
+
+    const formatCurrency = (amount) => `₹${Number(amount).toLocaleString("en-IN")}`;
+    const toDateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const todayValue = toDateKey(new Date());
+    const todayUtc = new Date(`${todayValue}T00:00:00.000Z`);
+    const lastBookableDate = new Date(todayUtc.getTime() + 365 * 86400000);
+    const lastBookableKey = lastBookableDate.toISOString().slice(0, 10);
+
+    if (window.flatpickr) {
+      checkInPicker = flatpickr(checkIn, {
+        dateFormat: "Y-m-d", minDate: todayValue, maxDate: lastBookableKey,
+        altInput: true, altFormat: "D, M j, Y", disable: [],
+        onChange: (_, value) => {
+          if (checkOutPicker) {
+            checkOutPicker.set("minDate", value || todayValue);
+            if (checkOut.value && checkOut.value <= value) checkOutPicker.clear();
+          }
+          refreshAvailability();
+        },
+      });
+      checkOutPicker = flatpickr(checkOut, {
+        dateFormat: "Y-m-d", minDate: todayValue, maxDate: lastBookableKey,
+        altInput: true, altFormat: "D, M j, Y",
+        onChange: refreshAvailability,
+      });
+    } else {
+      checkIn.type = "date";
+      checkOut.type = "date";
+      checkIn.min = todayValue;
+      checkOut.min = todayValue;
+      checkIn.max = lastBookableKey;
+      checkOut.max = lastBookableKey;
+    }
+
+    document.querySelector("#open-check-in").addEventListener("click", () => {
+      if (checkInPicker) checkInPicker.open();
+      else if (typeof checkIn.showPicker === "function") checkIn.showPicker();
+      else checkIn.focus();
+    });
+    document.querySelector("#open-check-out").addEventListener("click", () => {
+      if (checkOutPicker) checkOutPicker.open();
+      else if (typeof checkOut.showPicker === "function") checkOut.showPicker();
+      else checkOut.focus();
+    });
+
+    async function loadUnavailableDates() {
+      const windows = [];
+      for (let offset = 0; offset < 365; offset += 90) {
+        const fromDate = new Date(todayUtc.getTime() + offset * 86400000);
+        const toDate = new Date(todayUtc.getTime() + Math.min(offset + 90, 365) * 86400000);
+        windows.push({ from: fromDate.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10) });
+      }
+      for (const windowRange of windows) {
+        const params = new URLSearchParams({ listingId, ...windowRange });
+        const response = await fetch(`/api/bookings/availability?${params}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to load booked dates.");
+        result.unavailableDates.forEach((date) => unavailableDateKeys.add(date));
+      }
+      if (checkInPicker) checkInPicker.set("disable", [...unavailableDateKeys]);
+    }
+
+    function clearPriceSummary(message) {
+      selectedPrice = null;
+      bookingNights.textContent = message;
+      document.querySelector("#booking-base-cost").textContent = "";
+      document.querySelector("#booking-gst-cost").textContent = "";
+      document.querySelector("#booking-cleaning-cost").textContent = "";
+      document.querySelector("#booking-service-cost").textContent = "";
+      bookingTotal.textContent = "";
+      bookStayButton.disabled = true;
+    }
+
+    async function refreshAvailability() {
+      bookStayButton.disabled = true;
+      if (!checkIn.value || !checkOut.value) {
+        clearPriceSummary("Select dates to check availability");
+        bookingMessage.textContent = "";
+        return;
+      }
+      if (checkOut.value <= checkIn.value) {
+        clearPriceSummary("Choose a check-out after check-in");
+        bookingMessage.textContent = "Check-out must be after check-in.";
+        bookingMessage.classList.add("booking-error");
+        return;
+      }
+
+      bookingNights.textContent = "Checking availability...";
+      bookingMessage.textContent = "Checking selected dates and guest capacity...";
+      bookingMessage.classList.remove("booking-error");
+      try {
+        const params = new URLSearchParams({ listingId, checkIn: checkIn.value, checkOut: checkOut.value, guests: bookingGuests.value });
+        const response = await fetch(`/api/bookings/availability?${params}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to check availability.");
+        selectedPrice = result.available ? result : null;
+        bookingNights.textContent = `${result.nights} ${result.nights === 1 ? "night" : "nights"} × ${formatCurrency(result.pricePerNight)}`;
+        document.querySelector("#booking-base-cost").textContent = `Subtotal: ${formatCurrency(result.subtotal)}`;
+        document.querySelector("#booking-gst-cost").textContent = `GST (18%): ${formatCurrency(result.gstAmount)}`;
+        document.querySelector("#booking-cleaning-cost").textContent = `Cleaning fee: ${formatCurrency(result.cleaningFee)}`;
+        document.querySelector("#booking-service-cost").textContent = `Service fee: ${formatCurrency(result.serviceFee)}`;
+        bookingTotal.textContent = formatCurrency(result.totalPrice);
+        bookingMessage.textContent = result.message;
+        bookingMessage.classList.toggle("booking-error", !result.available);
+        bookStayButton.disabled = !result.available || isOwner;
+      } catch (error) {
+        clearPriceSummary(error.message);
+        bookingMessage.textContent = error.message;
+        bookingMessage.classList.add("booking-error");
+      }
+    }
+
+    checkIn.addEventListener("change", () => {
+      if (checkOut.type === "date") checkOut.min = checkIn.value || todayValue;
+      refreshAvailability();
+    });
+    checkOut.addEventListener("change", refreshAvailability);
+    bookingGuests.addEventListener("change", refreshAvailability);
+
+    async function startTestBooking() {
+      if (!selectedPrice) return;
+      if (!<%= currentUser ? "true" : "false" %>) {
+        const nextPath = `${window.location.pathname}?${new URLSearchParams({ checkIn: checkIn.value, checkOut: checkOut.value }).toString()}`;
+        window.location.href = `/login?next=${encodeURIComponent(nextPath)}`;
+        return;
+      }
+      bookStayButton.disabled = true;
+      bookingMessage.textContent = "Creating pending booking...";
+      try {
+        const response = await fetch("/api/bookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ listingId, checkIn: checkIn.value, checkOut: checkOut.value, guests: Number(bookingGuests.value) }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to create booking.");
+        pendingTestOrder = { bookingId: result.booking._id, orderId: result.order.id, amount: result.order.amount };
+        paymentResolved = false;
+        document.querySelector("#test-payment-nights").textContent = `${selectedPrice.nights} nights × ${formatCurrency(selectedPrice.pricePerNight)}`;
+        document.querySelector("#test-payment-subtotal").textContent = formatCurrency(selectedPrice.subtotal);
+        document.querySelector("#test-payment-gst").textContent = formatCurrency(selectedPrice.gstAmount);
+        document.querySelector("#test-payment-cleaning").textContent = formatCurrency(selectedPrice.cleaningFee);
+        document.querySelector("#test-payment-service").textContent = formatCurrency(selectedPrice.serviceFee);
+        document.querySelector("#test-payment-total").textContent = formatCurrency(selectedPrice.totalPrice);
+        document.querySelector("#test-payment-pay").textContent = `Pay ${formatCurrency(selectedPrice.totalPrice)} (test)`;
+        document.querySelector("#test-payment-message").textContent = `TEST PAYMENT · No real money is charged. Test order ${result.order.id}`;
+        testPaymentDialog.showModal();
+        bookingMessage.textContent = "Pending test booking created. It will be held for 15 minutes.";
+      } catch (error) {
+        bookingMessage.textContent = error.message;
+        bookingMessage.classList.add("booking-error");
+        bookStayButton.disabled = false;
+      }
+    }
+
+    async function finishTestPayment(outcome) {
+      if (!pendingTestOrder || paymentResolved) return;
+      const actions = document.querySelector(".test-payment-actions");
+      actions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+      const message = document.querySelector("#test-payment-message");
+      message.textContent = outcome === "success" ? "Processing test payment..." : outcome === "failure" ? "Processing simulated failure..." : "Cancelling test payment...";
+      try {
+        const response = await fetch("/api/payments/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...pendingTestOrder, outcome }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to process test payment.");
+        paymentResolved = true;
+        if (result.success) {
+          message.textContent = `✓ Payment Successful · TEST PAYMENT · Transaction ID: ${result.paymentId}`;
+          bookingMessage.textContent = "Test payment complete. Booking confirmed.";
+          window.setTimeout(() => { window.location.href = `/bookings/${result.bookingId}`; }, 900);
+          return;
+        }
+        message.textContent = outcome === "cancel"
+          ? "Test payment cancelled. No money was charged and the booking is not confirmed."
+          : "Test payment failed. No money was charged and the booking is not confirmed.";
+        bookingMessage.textContent = "Payment was not completed. Your booking has not been confirmed.";
+        window.setTimeout(() => testPaymentDialog.close(), 1800);
+      } catch (error) {
+        message.textContent = error.message;
+        actions.querySelectorAll("button").forEach((button) => { button.disabled = false; });
+      }
+    }
+
+    bookStayButton.addEventListener("click", startTestBooking);
+    document.querySelector("#test-payment-pay").addEventListener("click", () => finishTestPayment("success"));
+    document.querySelector("#test-payment-fail").addEventListener("click", () => finishTestPayment("failure"));
+    document.querySelector("#test-payment-cancel").addEventListener("click", () => finishTestPayment("cancel"));
+    document.querySelector("#test-payment-close").addEventListener("click", () => finishTestPayment("cancel"));
+    testPaymentDialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      finishTestPayment("cancel");
+    });
+    loadUnavailableDates().catch((error) => {
+      bookingMessage.textContent = error.message;
+      bookingMessage.classList.add("booking-error");
+    });
 
     const listingMap = document.querySelector("#listing-map");
     if (listingMap && window.mapboxgl) {
@@ -171,6 +427,7 @@
         .then((data) => {
           if (!data.features || !data.features.length) throw new Error("Location not found");
           const [longitude, latitude] = data.features[0].center;
+          listingMap.replaceChildren();
           const map = new mapboxgl.Map({
             container: listingMap,
             style: "mapbox://styles/mapbox/streets-v12",
@@ -195,88 +452,6 @@
     } else if (listingMap) {
       listingMap.innerHTML = "<p class=\"map-missing\">The map library could not load. Check your internet connection.</p>";
     }
-
-    const today = new Date();
-    const todayValue = today.toISOString().split("T")[0];
-    checkIn.min = todayValue;
-    checkOut.min = todayValue;
-
-    if (window.flatpickr) {
-      flatpickr(checkIn, {
-        dateFormat: "Y-m-d",
-        minDate: "today",
-        altInput: true,
-        altFormat: "D, M j, Y",
-        onChange: (selectedDates, dateString) => {
-          checkOut.min = dateString || todayValue;
-          updateBookingSummary();
-        }
-      });
-      flatpickr(checkOut, {
-        dateFormat: "Y-m-d",
-        minDate: "today",
-        altInput: true,
-        altFormat: "D, M j, Y",
-        onChange: updateBookingSummary
-      });
-    }
-
-    function updateBookingSummary() {
-      if (!checkIn.value || !checkOut.value) {
-        bookingNights.textContent = "Select your dates to see the total";
-        document.querySelector("#booking-base-cost").textContent = "";
-        document.querySelector("#booking-gst-cost").textContent = "";
-        bookingTotal.textContent = "";
-        bookStayButton.disabled = true;
-        bookingMessage.textContent = "";
-        return;
-      }
-
-      const startDate = new Date(`${checkIn.value}T00:00:00`);
-      const endDate = new Date(`${checkOut.value}T00:00:00`);
-      const nights = Math.round((endDate - startDate) / 86400000);
-
-      if (nights < 1) {
-        bookingNights.textContent = "Choose a check-out date after check-in";
-        document.querySelector("#booking-base-cost").textContent = "";
-        document.querySelector("#booking-gst-cost").textContent = "";
-        bookingTotal.textContent = "";
-        bookStayButton.disabled = true;
-        bookingMessage.textContent = "Your stay must be at least one night.";
-        bookingMessage.classList.add("booking-error");
-        return;
-      }
-
-      bookingMessage.textContent = "";
-      bookingMessage.classList.remove("booking-error");
-      bookingNights.textContent = `${nights} ${nights === 1 ? "night" : "nights"}`;
-      const baseCost = nightlyPrice * nights;
-      const gstCost = Math.round(baseCost * 0.18);
-      const totalCost = baseCost + gstCost;
-      document.querySelector("#booking-base-cost").textContent = `Room: ₹ ${baseCost.toLocaleString("en-IN")}`;
-      document.querySelector("#booking-gst-cost").textContent = `18% GST: ₹ ${gstCost.toLocaleString("en-IN")}`;
-      bookingTotal.textContent = `₹ ${totalCost.toLocaleString("en-IN")}`;
-      bookStayButton.disabled = false;
-    }
-
-    checkIn.addEventListener("change", () => {
-      checkOut.min = checkIn.value || todayValue;
-      updateBookingSummary();
-    });
-    checkOut.addEventListener("change", updateBookingSummary);
-
-    bookStayButton.addEventListener("click", () => {
-      const nights = Number(bookingNights.textContent.split(" ")[0]);
-      const total = Number(bookingTotal.textContent.replace(/[^0-9]/g, ""));
-      const params = new URLSearchParams({
-        listing: listingId,
-        checkIn: checkIn.value,
-        checkOut: checkOut.value,
-        nights: String(nights),
-        total: String(total),
-      });
-      window.location.href = `/bookings/new?${params.toString()}`;
-    });
 
     function escapeHtml(value) {
       return String(value).replace(/[&<>'"]/g, (character) => ({

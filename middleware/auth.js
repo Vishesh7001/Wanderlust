@@ -3,7 +3,9 @@ const User = require("../models/user.js");
 const attachUser = async (req, res, next) => {
   try {
     if (req.session.userId) {
-      req.user = await User.findById(req.session.userId).select("_id username email");
+      req.user = await User.findById(req.session.userId)
+        .select("_id username name email profileImage role wishlist")
+        .populate("wishlist", "_id");
     }
     res.locals.currentUser = req.user || null;
     next();

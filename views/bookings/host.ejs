@@ -1,0 +1,33 @@
+<% layout("layouts/boilerplate") %>
+<main class="booking-list-page">
+  <header class="booking-list-heading">
+    <div><p class="form-eyebrow">Hosting</p><h1>Bookings for My Listings</h1></div>
+    <a class="back-link" href="/my-listings">My listings</a>
+  </header>
+  <% if (!bookings.length) { %>
+    <section class="booking-empty booking-empty-large"><h2>No guest bookings yet</h2><p>Bookings for listings you own will appear here.</p></section>
+  <% } else { %>
+    <div class="host-booking-list">
+      <% for (const booking of bookings) { const listing = booking.listing; %>
+        <article class="host-booking-row">
+          <img src="<%= listing ? ((listing.images && listing.images[0]) || listing.image) : "" %>" alt="<%= listing ? listing.title : "Unavailable listing" %>" />
+          <div class="host-booking-main">
+            <p class="listing-eyebrow"><%= booking.user ? (booking.user.name || booking.user.username) : "Guest account" %></p>
+            <h2><%= listing ? listing.title : "Booking property" %></h2>
+            <p><%= listing ? `${listing.location}, ${listing.country}` : "Listing unavailable" %></p>
+          </div>
+          <div class="host-booking-facts">
+            <span><%= booking.checkIn.toISOString().slice(0, 10) %> to <%= booking.checkOut.toISOString().slice(0, 10) %></span>
+            <span><%= booking.guests %> guests · <%= booking.nights %> nights</span>
+            <strong>₹<%= Number(booking.totalPrice).toLocaleString("en-IN") %></strong>
+          </div>
+          <div class="host-booking-state">
+            <span class="booking-status status-<%= booking.bookingStatus.toLowerCase() %>"><%= booking.bookingStatus %></span>
+            <span class="payment-status"><%= booking.paymentStatus === "PAID" ? "TEST PAID" : booking.paymentStatus %></span>
+            <a class="card-owner-link" href="/bookings/<%= booking._id %>">View booking</a>
+          </div>
+        </article>
+      <% } %>
+    </div>
+  <% } %>
+</main>

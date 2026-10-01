@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: 2,
     },
+    name: {
+      type: String,
+      trim: true,
+      minlength: 2,
+      maxlength: 80,
+    },
     email: {
       type: String,
       required: true,
@@ -21,6 +27,20 @@ const userSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
+    profileImage: {
+      type: String,
+      default: "",
+      maxlength: 500,
+    },
+    role: {
+      type: String,
+      enum: ["user", "host", "admin"],
+      default: "user",
+    },
+    wishlist: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Listing",
+    }],
   },
   { timestamps: true }
 );

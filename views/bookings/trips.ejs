@@ -1,0 +1,74 @@
+<% layout("layouts/boilerplate") %>
+<main class="booking-list-page">
+  <header class="booking-list-heading">
+    <div><p class="form-eyebrow">Your stays</p><h1>My Trips</h1></div>
+    <a class="back-link" href="/listings"><i class="fa-solid fa-compass"></i> Explore stays</a>
+  </header>
+
+  <% const upcoming = bookings.filter((booking) => ["PENDING", "CONFIRMED"].includes(booking.bookingStatus)); %>
+  <% const completed = bookings.filter((booking) => booking.bookingStatus === "COMPLETED"); %>
+  <% const cancelled = bookings.filter((booking) => booking.bookingStatus === "CANCELLED"); %>
+
+  <% for (const [sectionTitle, sectionBookings] of [["Upcoming", upcoming], ["Completed", completed], ["Cancelled", cancelled]]) { %>
+    <section class="trip-section">
+      <h2><%= sectionTitle %><span><%= sectionBookings.length %></span></h2>
+      <% if (!sectionBookings.length) { %>
+        <p class="booking-empty">No <%= sectionTitle.toLowerCase() %> stays.</p>
+      <% } else { %>
+        <div class="trip-list">
+          <% for (const booking of sectionBookings) { const listing = booking.listing; %>
+            <article class="trip-card" data-booking-id="<%= booking._id %>">
+              <img src="<%= listing ? ((listing.images && listing.images[0]) || listing.image) : "" %>" alt="<%= listing ? listing.title : "Unavailable listing" %>" />
+              <div class="trip-card-content">
+                <div class="trip-card-heading">
+                  <div>
+                    <p class="listing-eyebrow"><%= listing ? `${listing.location}, ${listing.country}` : "Listing unavailable" %></p>
+                    <h3><%= listing ? listing.title : "Booking property" %></h3>
+                  </div>
+                  <span class="booking-status status-<%= booking.bookingStatus.toLowerCase() %>"><%= booking.bookingStatus %></span>
+                </div>
+                <div class="trip-card-facts">
+                  <span>Check-in <strong><%= booking.checkIn.toISOString().slice(0, 10) %></strong></span>
+                  <span>Check-out <strong><%= booking.checkOut.toISOString().slice(0, 10) %></strong></span>
+                  <span><strong><%= booking.guests %></strong> guests · <strong><%= booking.nights %></strong> nights</span>
+                  <span>Total <strong>₹<%= Number(booking.totalPrice).toLocaleString("en-IN") %></strong></span>
+                </div>
+                <div class="trip-card-footer">
+                  <span class="payment-status">Payment: <strong><%= booking.paymentStatus === "PAID" ? "TEST PAID" : booking.paymentStatus %></strong></span>
+                  <div class="trip-actions">
+                    <a class="edit-button" href="/bookings/<%= booking._id %>">View booking</a>
+                    <% if (["PENDING", "CONFIRMED"].includes(booking.bookingStatus) && booking.checkIn > new Date()) { %>
+                      <button class="delete-button" type="button" data-cancel-booking="<%= booking._id %>">Cancel booking</button>
+                    <% } %>
+                  </div>
+                </div>
+                <p class="booking-action-message" role="status"></p>
+              </div>
+            </article>
+          <% } %>
+        </div>
+      <% } %>
+    </section>
+  <% } %>
+</main>
+<script>
+  document.querySelectorAll("[data-cancel-booking]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (!window.confirm("Are you sure you want to cancel this booking? Any demo payment will be marked as refunded.")) return;
+      const card = button.closest(".trip-card");
+      const message = card.querySelector(".booking-action-message");
+      button.disabled = true;
+      message.textContent = "Cancelling booking...";
+      try {
+        const response = await fetch(`/api/bookings/${button.dataset.cancelBooking}/cancel`, { method: "POST" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to cancel this booking.");
+        message.textContent = result.message;
+        window.location.reload();
+      } catch (error) {
+        message.textContent = error.message;
+        button.disabled = false;
+      }
+    });
+  });
+</script>

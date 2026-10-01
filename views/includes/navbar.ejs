@@ -13,11 +13,13 @@
           <i class="fa-solid fa-house"></i>
           Home
         </a>
+        <a class="nav-link" href="/listings">
+          <i class="fa-solid fa-compass"></i>
+          Explore stays
+        </a>
         <% if (currentUser) { %>
-          <a class="nav-link" href="/listings">
-            <i class="fa-solid fa-compass"></i>
-            Explore stays
-          </a>
+          <a class="nav-link" href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
+          <a class="nav-link" href="/my-trips">My Trips</a>
         <% } %>
       </div>
       <div class="navbar-nav wander-nav wander-account-nav">
@@ -26,7 +28,12 @@
             <i class="fa-solid fa-plus"></i>
             Add new Listing
           </a>
-          <span class="nav-user"><span class="nav-user-avatar"><i class="fa-regular fa-user"></i></span><%= currentUser.username %></span>
+          <a class="nav-link" href="/my-listings">My Listings</a>
+          <% if (currentUser.role === "host" || currentUser.role === "admin") { %><a class="nav-link" href="/host/bookings">Bookings</a><% } %>
+          <a class="nav-link nav-user" href="/profile">
+            <% if (currentUser.profileImage) { %><img class="nav-user-avatar" src="<%= currentUser.profileImage %>" alt="" /><% } else { %><span class="nav-user-avatar"><i class="fa-regular fa-user"></i></span><% } %>
+            <span class="nav-user-name"><%= currentUser.name || currentUser.username %></span>
+          </a>
           <button class="nav-logout" type="button" data-logout>Logout</button>
         <% } else { %>
           <a class="nav-link" href="/login">Login</a>
@@ -39,8 +46,15 @@
 <% if (currentUser) { %>
   <script>
     document.querySelector("[data-logout]").addEventListener("click", async () => {
-      const response = await fetch("/logout", { method: "POST" });
-      if (response.ok) window.location.href = "/login";
+      const button = document.querySelector("[data-logout]");
+      button.disabled = true;
+      try {
+        const response = await fetch("/logout", { method: "POST" });
+        if (response.ok) window.location.href = "/login";
+        else button.disabled = false;
+      } catch {
+        button.disabled = false;
+      }
     });
   </script>
 <% } %>

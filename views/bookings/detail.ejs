@@ -1,0 +1,66 @@
+<% layout("layouts/boilerplate") %>
+<main class="booking-details-page">
+  <a class="back-link" href="/my-trips"><i class="fa-solid fa-arrow-left"></i> <%= isGuest ? "Back to My Trips" : "Back to host bookings" %></a>
+  <header class="booking-details-heading">
+    <p class="form-eyebrow"><%= booking.paymentProvider === "DEMO" ? "TEST PAYMENT · NO MONEY CHARGED" : "Booking" %></p>
+    <h1><%= booking.bookingStatus === "CONFIRMED" || booking.bookingStatus === "COMPLETED" ? "Booking Confirmed" : booking.bookingStatus === "PENDING" ? "Payment Pending" : "Booking " + booking.bookingStatus.toLowerCase() %></h1>
+    <p>Booking ID <strong>#<%= booking._id.toString().slice(-8).toUpperCase() %></strong></p>
+  </header>
+  <div class="booking-details-layout">
+    <section class="booking-details-card">
+      <div class="booking-stay-preview">
+        <img src="<%= booking.listing ? ((booking.listing.images && booking.listing.images[0]) || booking.listing.image) : "" %>" alt="<%= booking.listing ? booking.listing.title : "Unavailable listing" %>" />
+        <div>
+          <p class="listing-eyebrow"><%= booking.listing ? `${booking.listing.location}, ${booking.listing.country}` : "Listing unavailable" %></p>
+          <h2><%= booking.listing ? booking.listing.title : "Booking property" %></h2>
+          <p><%= booking.checkIn.toISOString().slice(0, 10) %> to <%= booking.checkOut.toISOString().slice(0, 10) %></p>
+        </div>
+      </div>
+      <dl class="booking-detail-facts">
+        <div><dt>Guest</dt><dd><%= booking.user ? (booking.user.name || booking.user.username) : "Guest" %></dd></div>
+        <div><dt>Host</dt><dd><%= booking.host ? (booking.host.name || booking.host.username) : "Host not listed" %></dd></div>
+        <div><dt>Guests</dt><dd><%= booking.guests %></dd></div>
+        <div><dt>Nights</dt><dd><%= booking.nights %></dd></div>
+        <div><dt>Booking status</dt><dd><%= booking.bookingStatus %></dd></div>
+        <div><dt>Payment status</dt><dd><%= booking.paymentStatus === "PAID" ? "TEST PAID" : booking.paymentStatus %></dd></div>
+        <% if (booking.paymentId) { %><div><dt>Test transaction</dt><dd><%= booking.paymentId %></dd></div><% } %>
+        <div><dt>Created</dt><dd><%= booking.createdAt.toISOString().slice(0, 10) %></dd></div>
+      </dl>
+      <% if (isGuest && ["PENDING", "CONFIRMED"].includes(booking.bookingStatus) && booking.checkIn > new Date()) { %>
+        <button class="delete-button" id="cancel-booking" type="button">Cancel booking</button>
+        <p class="booking-action-message" id="booking-action-message" role="status"></p>
+      <% } %>
+    </section>
+    <aside class="booking-cost-card">
+      <p class="listing-eyebrow">Price breakdown · INR</p>
+      <div class="booking-cost-dates">
+        <span>₹<%= Number(booking.pricePerNight).toLocaleString("en-IN") %> × <%= booking.nights %> nights</span><strong>₹<%= Number(booking.subtotal).toLocaleString("en-IN") %></strong>
+        <span>GST (18%)</span><strong>₹<%= Number(booking.gstAmount ?? Math.round(booking.subtotal * 0.18)).toLocaleString("en-IN") %></strong>
+        <span>Cleaning fee</span><strong>₹<%= Number(booking.cleaningFee).toLocaleString("en-IN") %></strong>
+        <span>Service fee</span><strong>₹<%= Number(booking.serviceFee).toLocaleString("en-IN") %></strong>
+      </div>
+      <h2 class="booking-detail-total">Total · ₹<%= Number(booking.totalPrice).toLocaleString("en-IN") %></h2>
+      <% if (booking.paymentProvider === "DEMO") { %><p class="demo-payment-note">TEST PAYMENT. No real money was charged.</p><% } %>
+      <% if (isGuest) { %><a class="form-submit" href="/my-trips">View My Trips</a><% } %>
+      <a class="clear-filters" href="/listings">Back to stays</a>
+    </aside>
+  </div>
+</main>
+<script>
+  const cancelButton = document.querySelector("#cancel-booking");
+  cancelButton?.addEventListener("click", async () => {
+    if (!window.confirm("Are you sure you want to cancel this booking? Any test payment will be marked as refunded.")) return;
+    cancelButton.disabled = true;
+    const message = document.querySelector("#booking-action-message");
+    message.textContent = "Cancelling booking...";
+    try {
+      const response = await fetch("/api/bookings/<%= booking._id %>/cancel", { method: "POST" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to cancel this booking.");
+      window.location.reload();
+    } catch (error) {
+      message.textContent = error.message;
+      cancelButton.disabled = false;
+    }
+  });
+</script>

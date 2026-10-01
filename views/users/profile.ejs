@@ -1,0 +1,78 @@
+<% layout("layouts/boilerplate") %>
+<main class="form-page profile-page">
+  <a class="back-link" href="/listings"><i class="fa-solid fa-arrow-left"></i> Back to stays</a>
+  <div class="form-heading">
+    <p class="form-eyebrow">Your account</p>
+    <h1>My Profile</h1>
+    <p>Keep your contact details current.</p>
+  </div>
+  <section class="profile-layout">
+    <div class="profile-summary">
+      <img id="profile-preview" src="<%= currentUser.profileImage || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser.name || currentUser.username) %>" alt="Profile" />
+      <strong><%= currentUser.name || currentUser.username %></strong>
+      <span><%= currentUser.email %></span>
+      <span class="profile-role"><%= currentUser.role %></span>
+    </div>
+    <form class="listing-form profile-form" id="profile-form" enctype="multipart/form-data">
+      <div class="form-field">
+        <label for="profile-name">Name</label>
+        <input id="profile-name" name="name" value="<%= currentUser.name || currentUser.username %>" minlength="2" maxlength="80" required />
+      </div>
+      <div class="form-field">
+        <label for="profile-email">Email</label>
+        <input id="profile-email" name="email" type="email" value="<%= currentUser.email %>" autocomplete="email" required />
+      </div>
+      <div class="form-field">
+        <label for="profile-image">Profile picture</label>
+        <input id="profile-image" name="profileImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
+        <span class="form-help">JPG, PNG, WEBP, or GIF up to 5 MB.</span>
+      </div>
+      <button class="form-submit" id="profile-save" type="submit"><i class="fa-solid fa-check"></i> Save profile</button>
+      <p class="profile-message" id="profile-message" role="status"></p>
+    </form>
+  </section>
+</main>
+<script>
+  const profileForm = document.querySelector("#profile-form");
+  const profileMessage = document.querySelector("#profile-message");
+  const profileSave = document.querySelector("#profile-save");
+  const profileInput = document.querySelector("#profile-image");
+  profileInput.addEventListener("change", () => {
+    const file = profileInput.files[0];
+    if (file) document.querySelector("#profile-preview").src = URL.createObjectURL(file);
+  });
+  profileForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    profileSave.disabled = true;
+    profileSave.textContent = "Saving...";
+    profileMessage.textContent = "";
+    try {
+      const response = await fetch("/api/users/me", { method: "PUT", body: new FormData(profileForm) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to update profile.");
+      profileMessage.className = "profile-message auth-success";
+      profileMessage.textContent = result.message;
+      document.querySelector(".nav-user-name").textContent = result.user.name;
+      document.querySelector(".profile-summary strong").textContent = result.user.name;
+      document.querySelector(".profile-summary span:not(.profile-role)").textContent = result.user.email;
+      if (result.user.profileImage) {
+        document.querySelector("#profile-preview").src = result.user.profileImage;
+        const avatar = document.querySelector(".nav-user-avatar");
+        if (avatar instanceof HTMLImageElement) avatar.src = result.user.profileImage;
+        else {
+          const image = document.createElement("img");
+          image.className = "nav-user-avatar";
+          image.src = result.user.profileImage;
+          image.alt = "";
+          avatar.replaceWith(image);
+        }
+      }
+    } catch (error) {
+      profileMessage.className = "profile-message auth-error";
+      profileMessage.textContent = error.message;
+    } finally {
+      profileSave.disabled = false;
+      profileSave.innerHTML = '<i class="fa-solid fa-check"></i> Save profile';
+    }
+  });
+</script>

@@ -1,0 +1,24 @@
+<% const isFavorite = Boolean(currentUser && (currentUser.wishlist || []).some((saved) => String(saved._id || saved) === String(listing._id))); %>
+<% const isOwner = Boolean(currentUser && listing.owner && String(listing.owner._id || listing.owner) === String(currentUser._id)); %>
+<article class="listing-card" data-price="<%= listing.price %>">
+  <div class="listing-card-media">
+    <a href="/listings/<%= listing._id %>" aria-label="View <%= listing.title %>">
+      <img src="<%= listing.images && listing.images.length ? listing.images[0] : listing.image %>" alt="<%= listing.title %>" class="listing-card-image" loading="lazy" />
+    </a>
+    <button class="wishlist-toggle <%= isFavorite ? "is-saved" : "" %>" type="button" data-wishlist-toggle data-listing-id="<%= listing._id %>" data-logged-in="<%= currentUser ? "true" : "false" %>" aria-pressed="<%= isFavorite %>" aria-label="<%= isFavorite ? "Remove from wishlist" : "Add to wishlist" %>">
+      <i class="fa-<%= isFavorite ? "solid" : "regular" %> fa-heart"></i>
+    </button>
+  </div>
+  <div class="listing-card-body">
+    <a class="listing-card-title" href="/listings/<%= listing._id %>"><h2><%= listing.title %></h2></a>
+    <p class="listing-card-location"><%= listing.location %>, <%= listing.country %><% if (listing.propertyType && listing.propertyType !== "Other") { %> · <%= listing.propertyType %><% } %></p>
+    <div class="listing-price-row">
+      <div class="price-calculation">
+        <p class="listing-price-badge">&#8377; <span class="listing-price-value"><%= Number(listing.price || 0).toLocaleString("en-IN") %></span>/ night</p>
+        <span class="price-plus">+</span><span class="gst-label">18% GST</span>
+      </div>
+      <button class="tax-toggle" type="button" aria-pressed="false">After tax</button>
+    </div>
+    <% if (isOwner) { %><a class="card-owner-link" href="/listings/<%= listing._id %>/edit">Edit your listing</a><% } %>
+  </div>
+</article>

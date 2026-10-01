@@ -1,59 +1,125 @@
 <% layout("layouts/boilerplate") %>
-<div class="listings-page">
+<main class="listings-page" data-show-welcome="<%= showWelcome ? "true" : "false" %>">
   <% if (showWelcome) { %>
     <div class="welcome-toast" role="status">Welcome to WanderLust</div>
   <% } %>
-  <div class="listings-grid">
-    <% for(let listing of allListings) { %>
-    <article class="listing-card" data-price="<%= listing.price %>">
-      <img
-        src="<%= listing.image %>"
-        alt="<%= listing.title %>"
-        class="listing-card-image"
-      />
-      <div class="listing-card-body">
-        <a class="listing-card-title" href="/listings/<%= listing._id %>">
-          <h4><%= listing.title %></h4>
-        </a>
-        <div class="listing-price-row">
-          <div class="price-calculation">
-            <p class="listing-price-badge">&#8377; <span class="listing-price-value"><%= listing.price.toLocaleString("en-IN") %></span>/ night</p>
-            <span class="price-plus">+</span>
-            <span class="gst-label">18% GST</span>
-          </div>
-          <button class="tax-toggle" type="button" aria-pressed="false">After tax</button>
-        </div>
-      </div>
-    </article>
+  <header class="listings-heading">
+    <div>
+      <p class="form-eyebrow"><%= isWishlist ? "Saved for later" : isMyListings ? "Your hosted stays" : "A good place to start" %></p>
+      <h1><%= pageTitle || "Find your next stay" %></h1>
+    </div>
+    <% if (isMyListings) { %>
+      <a class="form-submit" href="/listings/new"><i class="fa-solid fa-plus"></i> Add a listing</a>
     <% } %>
-  </div>
-</div>
+  </header>
+
+  <% if (!isWishlist && !isMyListings) { %>
+    <form class="listing-search" id="listing-search" method="GET" action="/listings">
+      <div class="search-fields">
+        <label>Location<input name="location" value="<%= filters.location || "" %>" placeholder="City or region" /></label>
+        <label>Country<input name="country" value="<%= filters.country || "" %>" placeholder="Country" /></label>
+        <label>Property<input name="title" value="<%= filters.title || "" %>" placeholder="Property name" /></label>
+      </div>
+      <div class="filter-fields">
+        <label>Min price<input name="minPrice" type="number" min="0" value="<%= filters.minPrice || "" %>" placeholder="Any" /></label>
+        <label>Max price<input name="maxPrice" type="number" min="0" value="<%= filters.maxPrice || "" %>" placeholder="Any" /></label>
+        <label>Type
+          <select name="propertyType">
+            <option value="">Any type</option>
+            <% for (const type of ["Apartment", "House", "Cabin", "Villa", "Guesthouse", "Other"]) { %>
+              <option value="<%= type %>" <%= filters.propertyType === type ? "selected" : "" %>><%= type %></option>
+            <% } %>
+          </select>
+        </label>
+        <label>Bedrooms<input name="bedrooms" type="number" min="0" max="100" value="<%= filters.bedrooms || "" %>" placeholder="Any" /></label>
+        <label>Bathrooms<input name="bathrooms" type="number" min="0" max="100" value="<%= filters.bathrooms || "" %>" placeholder="Any" /></label>
+        <label>Amenities<input name="amenities" value="<%= Array.isArray(filters.amenities) ? filters.amenities.join(", ") : filters.amenities || "" %>" placeholder="Wifi, Pool" /></label>
+      </div>
+      <div class="search-actions">
+        <button class="form-submit search-submit" type="submit"><i class="fa-solid fa-magnifying-glass"></i><span>Search stays</span></button>
+        <a class="clear-filters" href="/listings">Clear filters</a>
+      </div>
+    </form>
+    <% if (searchError) { %><p class="listing-state listing-state-error" role="alert"><%= searchError %></p><% } %>
+  <% } %>
+
+  <% if (allListings.length) { %>
+    <p class="listing-results-count"><%= allListings.length %> <%= allListings.length === 1 ? "stay" : "stays" %><% if (isMyListings || isWishlist) { %> found<% } %></p>
+    <div class="listings-grid">
+      <% for (const listing of allListings) { %>
+        <%- include("_card.ejs", { listing }) %>
+      <% } %>
+    </div>
+  <% } else if (!searchError) { %>
+    <section class="listing-state listing-empty-state">
+      <i class="fa-regular <%= isWishlist ? "fa-heart" : "fa-compass" %>"></i>
+      <h2><%= isWishlist ? "Your wishlist is empty" : isMyListings ? "No listings yet" : "No stays match those filters" %></h2>
+      <p><%= isWishlist ? "Save places you like and they will be waiting here." : isMyListings ? "Add a place to start sharing it with guests." : "Try another location or clear a few filters." %></p>
+      <% if (isMyListings) { %><a class="form-submit" href="/listings/new">Add your first listing</a><% } %>
+      <% if (isWishlist) { %><a class="form-submit" href="/listings">Explore stays</a><% } %>
+      <% if (!isWishlist && !isMyListings) { %><a class="clear-filters" href="/listings">Clear filters</a><% } %>
+    </section>
+  <% } %>
+</main>
 
 <script>
+  const searchForm = document.querySelector("#listing-search");
+  searchForm?.addEventListener("submit", () => {
+    const button = searchForm.querySelector(".search-submit");
+    button.disabled = true;
+    button.querySelector("span").textContent = "Searching...";
+  });
+
   document.querySelectorAll(".listing-card").forEach((card) => {
     const basePrice = Number(card.dataset.price);
     const priceValue = card.querySelector(".listing-price-value");
     const priceBadge = card.querySelector(".listing-price-badge");
     const button = card.querySelector(".tax-toggle");
-
     button.addEventListener("click", () => {
       const showingAfterTax = button.getAttribute("aria-pressed") === "true";
       const priceRow = button.closest(".listing-price-row");
-      const displayedPrice = showingAfterTax ? basePrice : Math.round(basePrice * 1.18);
-      priceValue.textContent = displayedPrice.toLocaleString("en-IN");
+      priceValue.textContent = Math.round(showingAfterTax ? basePrice : basePrice * 1.18).toLocaleString("en-IN");
       button.textContent = showingAfterTax ? "After tax" : "Before tax";
       button.setAttribute("aria-pressed", String(!showingAfterTax));
       priceBadge.classList.toggle("tax-included", !showingAfterTax);
       priceRow.classList.toggle("tax-included", !showingAfterTax);
     });
   });
-</script>
 
-<% if (showWelcome) { %>
-  <script>
-    window.setTimeout(() => {
-      const welcomeToast = document.querySelector(".welcome-toast");
-      if (welcomeToast) welcomeToast.classList.add("welcome-toast-hidden");
-    }, 3500);
-  </script>
-<% } %>
+  document.querySelectorAll("[data-wishlist-toggle]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (button.dataset.loggedIn !== "true") {
+        if (window.confirm("Log in to save this stay to your wishlist?")) {
+          const next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/login?next=${next}`;
+        }
+        return;
+      }
+      const wasSaved = button.getAttribute("aria-pressed") === "true";
+      button.disabled = true;
+      try {
+        const response = await fetch(`/api/wishlist/${button.dataset.listingId}`, { method: wasSaved ? "DELETE" : "POST" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to update wishlist.");
+        button.setAttribute("aria-pressed", String(!wasSaved));
+        button.setAttribute("aria-label", wasSaved ? "Add to wishlist" : "Remove from wishlist");
+        button.classList.toggle("is-saved", !wasSaved);
+        const heartIcon = button.querySelector("i");
+        heartIcon.classList.toggle("fa-solid", !wasSaved);
+        heartIcon.classList.toggle("fa-regular", wasSaved);
+        if (window.location.pathname === "/wishlist" && wasSaved) {
+          button.closest(".listing-card")?.remove();
+          if (!document.querySelector(".listing-card")) window.location.reload();
+        }
+      } catch (error) {
+        window.alert(error.message);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+
+  if (document.querySelector(".listings-page").dataset.showWelcome === "true") {
+    window.setTimeout(() => document.querySelector(".welcome-toast")?.classList.add("welcome-toast-hidden"), 3500);
+  }
+</script>

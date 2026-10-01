@@ -11,6 +11,7 @@
     </div>
 
     <form class="listing-form" method="POST" action="/listings" enctype="multipart/form-data">
+      <% if (formError) { %><p class="form-error" role="alert"><%= formError %></p><% } %>
       <div class="form-field">
         <label for="title">Title</label>
         <input id="title" name="listing[title]" placeholder="e.g. Cozy Beachfront Cottage" type="text" required />
@@ -21,8 +22,9 @@
       </div>
       <div class="form-field">
         <label for="image">Property image</label>
-        <input id="image" name="listing[image]" type="file" accept="image/*" required />
-        <span class="form-help">Upload a JPG, PNG, WEBP, or other image up to 5 MB.</span>
+        <input id="image" name="listing[images]" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
+        <span class="form-help">Choose up to 8 JPG, PNG, WEBP, or GIF images, 5 MB each.</span>
+        <div class="image-preview-grid" id="image-preview" aria-live="polite"></div>
       </div>
       <div class="form-row">
         <div class="form-field">
@@ -38,9 +40,72 @@
         <label for="location">Location</label>
         <input id="location" name="listing[location]" placeholder="Goa" type="text" required />
       </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="property-type">Property type</label>
+          <select id="property-type" name="listing[propertyType]" required>
+            <option value="Other">Other</option><option>Apartment</option><option>House</option><option>Cabin</option><option>Villa</option><option>Guesthouse</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="bedrooms">Bedrooms</label>
+          <input id="bedrooms" name="listing[bedrooms]" type="number" min="0" max="100" value="1" required />
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="bathrooms">Bathrooms</label>
+        <input id="bathrooms" name="listing[bathrooms]" type="number" min="0" max="100" value="1" required />
+      </div>
+      <div class="form-field">
+        <label for="max-guests">Maximum guests</label>
+        <input id="max-guests" name="listing[maxGuests]" type="number" min="1" max="100" value="2" required />
+      </div>
+      <fieldset class="amenities-fieldset">
+        <legend>Amenities</legend>
+        <div class="amenities-options">
+          <input type="hidden" name="listing[amenities]" value="" />
+          <% for (const amenity of ["Wifi", "Kitchen", "Air conditioning", "Pool", "Parking"]) { %>
+            <label><input type="checkbox" name="listing[amenities]" value="<%= amenity %>" /> <%= amenity %></label>
+          <% } %>
+        </div>
+      </fieldset>
       <button class="form-submit" type="submit">
         <i class="fa-solid fa-plus"></i>
         Add listing
       </button>
     </form>
   </main>
+  <script>
+    const imageInput = document.querySelector("#image");
+    const imagePreview = document.querySelector("#image-preview");
+    imageInput.addEventListener("change", () => {
+      const files = [...imageInput.files].slice(0, 8);
+      const transfer = new DataTransfer();
+      files.forEach((file) => transfer.items.add(file));
+      imageInput.files = transfer.files;
+      renderImagePreviews();
+    });
+    function renderImagePreviews() {
+      imagePreview.replaceChildren();
+      [...imageInput.files].forEach((file, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "image-preview-item";
+        const image = document.createElement("img");
+        image.src = URL.createObjectURL(file);
+        image.alt = file.name;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "image-remove";
+        remove.setAttribute("aria-label", `Remove ${file.name}`);
+        remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        remove.addEventListener("click", () => {
+          const transfer = new DataTransfer();
+          [...imageInput.files].filter((_, fileIndex) => fileIndex !== index).forEach((selected) => transfer.items.add(selected));
+          imageInput.files = transfer.files;
+          renderImagePreviews();
+        });
+        wrapper.append(image, remove);
+        imagePreview.append(wrapper);
+      });
+    }
+  </script>

@@ -8,17 +8,18 @@ router.get("/me", (req, res) => {
   if (!req.user) {
     return res.json({ user: null });
   }
-  res.json({ user: { id: req.user._id, username: req.user.username, email: req.user.email } });
+  res.json({ user: publicUser(req.user) });
 });
 
 router.post(["/register", "/signup"], async (req, res) => {
   try {
-    const username = String(req.body.username || "").trim();
+    const name = String(req.body.name || req.body.username || "").trim();
+    const username = String(req.body.username || name).trim();
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
 
-    if (username.length < 2 || !/^\S+@\S+\.\S+$/.test(email) || password.length < 6) {
-      return res.status(400).json({ error: "Enter a valid email, a name, and a password of at least 6 characters." });
+    if (name.length < 2 || name.length > 80 || username.length < 2 || username.length > 40 || !/^\S+@\S+\.\S+$/.test(email) || password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      return res.status(400).json({ error: "Enter a valid name and email, and use a password with at least 8 characters including a number." });
     }
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
@@ -27,9 +28,11 @@ router.post(["/register", "/signup"], async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    await User.create({ username, email, passwordHash });
-    res.status(201).json({ message: "Account created successfully. Please login." });
+    const user = await User.create({ username, name, email, passwordHash });
+    await regenerateSession(req, user._id);
+    res.status(201).json({ message: "Account created successfully.", user: publicUser(user) });
   } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ error: "An account already uses that email or username." });
     res.status(500).json({ error: "Unable to create your account." });
   }
 });
@@ -44,8 +47,8 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    req.session.userId = user._id.toString();
-    res.json({ user: { id: user._id, username: user.username, email: user.email } });
+    await regenerateSession(req, user._id);
+    res.json({ user: publicUser(user) });
   } catch (err) {
     res.status(500).json({ error: "Unable to log in." });
   }
@@ -60,5 +63,26 @@ router.post("/logout", (req, res) => {
     res.json({ success: true });
   });
 });
+
+function publicUser(user) {
+  return {
+    id: user._id,
+    username: user.username,
+    name: user.name || user.username,
+    email: user.email,
+    profileImage: user.profileImage || "",
+    role: user.role || "user",
+  };
+}
+
+function regenerateSession(req, userId) {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((error) => {
+      if (error) return reject(error);
+      req.session.userId = userId.toString();
+      req.session.save((saveError) => saveError ? reject(saveError) : resolve());
+    });
+  });
+}
 
 module.exports = router;

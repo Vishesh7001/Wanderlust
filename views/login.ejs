@@ -40,7 +40,7 @@
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to log in.");
-      const destination = nextPath.startsWith("/") ? nextPath : "/listings";
+      const destination = nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/listings";
       const separator = destination.includes("?") ? "&" : "?";
       window.location.href = `${destination}${separator}welcome=1`;
     } catch (error) {

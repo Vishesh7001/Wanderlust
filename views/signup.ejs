@@ -7,14 +7,14 @@
   </div>
 
   <form class="auth-form auth-form-centered" id="signup-form">
-    <label for="signup-username">Full name / Username</label>
-    <input id="signup-username" type="text" autocomplete="name" minlength="2" required />
+    <label for="signup-name">Full name</label>
+    <input id="signup-name" type="text" autocomplete="name" minlength="2" maxlength="40" required />
     <label for="signup-email">Email</label>
     <input id="signup-email" type="email" autocomplete="email" required />
     <label for="signup-password">Password</label>
-    <input id="signup-password" type="password" autocomplete="new-password" minlength="6" required />
+    <input id="signup-password" type="password" autocomplete="new-password" minlength="8" required />
     <label for="signup-confirm-password">Confirm password</label>
-    <input id="signup-confirm-password" type="password" autocomplete="new-password" minlength="6" required />
+    <input id="signup-confirm-password" type="password" autocomplete="new-password" minlength="8" required />
     <button class="form-submit" id="signup-submit" type="submit">Sign up</button>
     <p class="auth-message auth-error" id="signup-message"></p>
     <p class="auth-switch">Already have an account? <a href="/login">Login</a></p>
@@ -44,14 +44,14 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: document.querySelector("#signup-username").value.trim(),
+          name: document.querySelector("#signup-name").value.trim(),
           email: document.querySelector("#signup-email").value.trim(),
           password,
         }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to create your account.");
-      window.location.href = "/login?message=" + encodeURIComponent(result.message);
+      window.location.href = "/listings?welcome=1";
     } catch (error) {
       signupMessage.textContent = error.message;
       signupButton.disabled = false;

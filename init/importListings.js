@@ -12,24 +12,31 @@ async function importListings() {
 
   await mongoose.connect(uri);
 
-  const operations = listings.map((listing) => ({
-    updateOne: {
-      filter: {
-        title: listing.title,
-        location: listing.location,
-        country: listing.country,
+  const operations = listings.map((listing) => {
+    const { propertyType, bedrooms, bathrooms, amenities, ...sourceFields } = listing;
+    return {
+      updateOne: {
+        filter: {
+          title: listing.title,
+          location: listing.location,
+          country: listing.country,
+        },
+        update: {
+          $set: { propertyType, bedrooms, bathrooms, amenities },
+          $setOnInsert: sourceFields,
+        },
+        upsert: true,
       },
-      update: { $setOnInsert: listing },
-      upsert: true,
-    },
-  }));
+    };
+  });
 
   const result = await Listing.bulkWrite(operations, { ordered: false });
   const importedCount = result.upsertedCount;
-  const skippedCount = listings.length - importedCount;
+  const updatedCount = result.modifiedCount;
+  const skippedCount = listings.length - importedCount - updatedCount;
   const totalCount = await Listing.countDocuments();
 
-  console.log(`Imported ${importedCount} new listings; skipped ${skippedCount} already present.`);
+  console.log(`Imported ${importedCount} new listings; updated ${updatedCount}; unchanged ${skippedCount}.`);
   console.log(`Listings collection now contains ${totalCount} records.`);
 }
 
