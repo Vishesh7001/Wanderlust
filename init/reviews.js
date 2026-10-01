@@ -1,10 +1,12 @@
+require("dotenv").config();
+
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const Listing = require("../models/listing.js");
 const User = require("../models/user.js");
 const Review = require("../models/review.js");
 
-const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/wanderlust";
+const MONGODB_URI = process.env.MONGODB_URI;
 const sampleReviews = [
   ["Rahul Sharma", "rahul@example.com", 5, "Amazing place with a beautiful view. Everything was clean, comfortable, and thoughtfully arranged."],
   ["Priya Singh", "priya@example.com", 4, "A peaceful stay in a lovely location. The host was helpful and check-in was very easy."],
@@ -15,7 +17,8 @@ const sampleReviews = [
 ];
 
 async function seedReviews() {
-  await mongoose.connect(MONGO_URL);
+  if (!MONGODB_URI) throw new Error("MONGODB_URI is not set in the environment.");
+  await mongoose.connect(MONGODB_URI);
   const listing = await Listing.findOne();
   if (!listing) throw new Error("Create listings before seeding reviews.");
 

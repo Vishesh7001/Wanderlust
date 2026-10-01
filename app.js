@@ -14,7 +14,7 @@ const authRoutes = require("./routes/auth.js");
 const reviewRoutes = require("./routes/reviews.js");
 const { attachUser, requirePageLogin } = require("./middleware/auth.js");
 
-const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/wanderlust";
+const MONGODB_URI = process.env.MONGODB_URI;
 const uploadDirectory = path.join(__dirname, "public", "uploads");
 fs.mkdirSync(uploadDirectory, { recursive: true });
 
@@ -154,7 +154,8 @@ app.delete("/listings/:id", requirePageLogin, async (req, res) => {
 
 async function startServer() {
   try {
-    await mongoose.connect(MONGO_URL);
+    if (!MONGODB_URI) throw new Error("MONGODB_URI is not set in the environment.");
+    await mongoose.connect(MONGODB_URI);
     console.log("connected to DB");
 
     app.listen(8080, () => {
