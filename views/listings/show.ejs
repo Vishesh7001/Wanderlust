@@ -215,6 +215,7 @@
 
   <script>
     const listingId = "<%= listing._id %>";
+    const isLoggedIn = "<%= !!currentUser %>" === "true";
     const reviews = [];
 
     const reviewsList = document.querySelector("#reviews-list");
@@ -370,7 +371,7 @@
 
     async function startTestBooking() {
       if (!selectedPrice) return;
-      if (!<%= currentUser ? "true" : "false" %>) {
+      if (!isLoggedIn) {
         const nextPath = `${window.location.pathname}?${new URLSearchParams({ checkIn: checkIn.value, checkOut: checkOut.value }).toString()}`;
         window.location.href = `/login?next=${encodeURIComponent(nextPath)}`;
         return;
