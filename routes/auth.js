@@ -59,7 +59,8 @@ router.post("/logout", (req, res) => {
     if (err) {
       return res.status(500).json({ error: "Unable to log out." });
     }
-    res.clearCookie("connect.sid");
+    // Clear the session cookie — must match the name set in session config.
+    res.clearCookie("wl.sid", { path: "/", httpOnly: true, sameSite: "lax" });
     res.json({ success: true });
   });
 });

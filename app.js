@@ -40,6 +40,16 @@ const {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const PORT = Number(process.env.PORT) || 8080;
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+if (IS_PRODUCTION && !process.env.SESSION_SECRET) {
+  console.error(
+    "[auth] FATAL: SESSION_SECRET env variable is not set. " +
+    "All sessions will be invalidated on every restart. " +
+    "Set SESSION_SECRET in your Render environment variables."
+  );
+}
+
 const SESSION_SECRET =
   process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
@@ -47,6 +57,13 @@ const recommendationService = createRecommendationService();
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
+/*
+ * Trust the first proxy (Render, Vercel, etc.) so that
+ * req.secure works correctly behind HTTPS reverse proxies.
+ * Without this, secure cookies are never sent on Render.
+ */
+app.set("trust proxy", 1);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -120,6 +137,7 @@ if (process.env.VERCEL) {
 
 app.use(
   session({
+    name: "wl.sid",
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
@@ -130,13 +148,19 @@ app.use(
           collectionName: "sessions",
           ttl: 60 * 60 * 24 * 7,
           autoRemove: "native",
+          touchAfter: 24 * 3600,
         })
       : undefined,
 
     cookie: {
       httpOnly: true,
+      /*
+       * sameSite: "lax" works for same-origin navigation.
+       * On Render (HTTPS), the cookie must be secure so browsers
+       * store and send it. req.secure is reliable after trust proxy.
+       */
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: IS_PRODUCTION,
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   })
