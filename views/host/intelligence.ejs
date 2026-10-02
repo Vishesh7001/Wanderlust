@@ -1,0 +1,374 @@
+<% layout("layouts/boilerplate") %>
+<main class="host-intelligence-page" data-intelligence-page>
+  <header class="host-intelligence-heading">
+    <div>
+      <p class="form-eyebrow">Hosting tools</p>
+      <h1>Property intelligence</h1>
+      <p>Real booking activity, local asking-price comparisons, and careful what-if pricing for listings you own.</p>
+    </div>
+    <a class="back-link" href="/my-listings">My listings</a>
+  </header>
+
+  <section class="intelligence-controls" aria-label="Analytics filters">
+    <label>
+      <span>Property</span>
+      <select data-listing-select disabled>
+        <option value="">Loading your listings…</option>
+      </select>
+    </label>
+    <label>
+      <span>Look-back period</span>
+      <select data-period-select>
+        <option value="30">Last 30 complete days</option>
+        <option value="90">Last 90 complete days</option>
+        <option value="365">Last 365 complete days</option>
+      </select>
+    </label>
+  </section>
+
+  <p class="intelligence-status" data-status role="status" aria-live="polite">Loading your properties…</p>
+  <section class="intelligence-dashboard" data-dashboard hidden>
+    <header class="intelligence-property-heading">
+      <div>
+        <p class="form-eyebrow" data-property-location></p>
+        <h2 data-property-title></h2>
+      </div>
+      <span class="intelligence-price" data-current-price></span>
+    </header>
+
+    <section class="intelligence-metrics" aria-label="Booking performance">
+      <article><span>Confirmed bookings</span><strong data-metric="confirmedBookingCount">0</strong></article>
+      <article><span>RAZORPAY bookings</span><strong data-metric="realPaidBookingCount">0</strong></article>
+      <article><span>Demo-payment bookings</span><strong data-metric="testPaymentBookingCount">0</strong><small>Test checkout; no money charged</small></article>
+      <article><span>Guest rating</span><strong data-metric="guestRating">—</strong><small data-metric="guestReviewCount">No reviews</small></article>
+      <article><span>Recorded occupancy</span><strong data-metric="occupancyRate">—</strong></article>
+      <article><span>Booked nights</span><strong data-metric="bookedNights">0</strong></article>
+      <article><span>RAZORPAY subtotal</span><strong data-metric="paidAccommodationSubtotal">₹0</strong><small>Before taxes and fees</small></article>
+      <article><span>Average stay</span><strong data-metric="averageStayNights">—</strong></article>
+      <article><span>Refunded cancellations</span><strong data-metric="cancelledBookingCount">0</strong></article>
+    </section>
+
+    <section class="intelligence-grid">
+      <article class="intelligence-card">
+        <div class="intelligence-card-heading">
+          <div><p class="form-eyebrow">Market snapshot</p><h2>Comparable asking prices</h2></div>
+          <span data-comparable-scope></span>
+        </div>
+        <p class="intelligence-muted" data-comparable-message></p>
+        <div class="comparable-summary" data-comparable-summary></div>
+        <ul class="intelligence-comparable-list" data-comparable-list></ul>
+        <p class="intelligence-disclaimer">Prices are current active-listing prices, not completed transaction prices.</p>
+      </article>
+
+      <article class="intelligence-card">
+        <div class="intelligence-card-heading">
+          <div><p class="form-eyebrow">Booking patterns</p><h2>Confirmed booking activity</h2></div>
+        </div>
+        <p class="intelligence-muted">Includes successful demo test bookings; these are not real-money demand or revenue.</p>
+        <div class="intelligence-trend-chart" data-trend-chart role="img" aria-label="Paid bookings per period"></div>
+        <p class="intelligence-muted" data-trend-empty hidden>No paid bookings were recorded in this period.</p>
+      </article>
+    </section>
+
+    <section class="intelligence-grid">
+      <article class="intelligence-card">
+        <div class="intelligence-card-heading">
+          <div><p class="form-eyebrow">Demand signal</p><h2>Near-term baseline</h2></div>
+        </div>
+        <div data-demand-summary></div>
+        <div class="intelligence-months" data-demand-months></div>
+      </article>
+
+      <article class="intelligence-card">
+        <div class="intelligence-card-heading">
+          <div><p class="form-eyebrow">Neutral notices</p><h2>Things to review</h2></div>
+        </div>
+        <ul class="intelligence-alerts" data-alerts></ul>
+      </article>
+    </section>
+
+    <section class="intelligence-grid intelligence-actions-grid">
+      <article class="intelligence-card">
+        <div class="intelligence-card-heading">
+          <div><p class="form-eyebrow">What-if only</p><h2>Simulate a nightly price</h2></div>
+        </div>
+        <p class="intelligence-muted">Simulation never changes your listing. Apply a price only after reviewing the result and confirming the update.</p>
+        <form class="intelligence-price-form" data-price-form>
+          <label for="intelligence-price">New nightly price (₹)</label>
+          <div><input id="intelligence-price" name="price" type="number" min="1" max="10000000" step="1" required /><button class="btn btn-primary" type="submit">Simulate</button></div>
+        </form>
+        <div class="intelligence-simulation" data-simulation role="status" aria-live="polite"></div>
+        <button class="btn btn-outline-primary" type="button" data-apply-price hidden>Apply this price</button>
+      </article>
+
+      <article class="intelligence-card">
+        <div class="intelligence-card-heading">
+          <div><p class="form-eyebrow">Evidence first</p><h2>AI business insights</h2></div>
+          <button class="btn btn-outline-primary" type="button" data-generate-insights>Generate insights</button>
+        </div>
+        <p class="intelligence-muted">AI can select only from verified booking, occupancy, and comparable-price signals. It cannot invent facts or alter prices.</p>
+        <ul class="intelligence-insights" data-insights aria-live="polite"></ul>
+      </article>
+    </section>
+
+    <details class="intelligence-notes">
+      <summary>How to read these figures</summary>
+      <ul data-notes></ul>
+    </details>
+  </section>
+</main>
+
+<script>
+  (() => {
+    const root = document.querySelector("[data-intelligence-page]");
+    const listingSelect = root.querySelector("[data-listing-select]");
+    const periodSelect = root.querySelector("[data-period-select]");
+    const status = root.querySelector("[data-status]");
+    const dashboard = root.querySelector("[data-dashboard]");
+    const priceForm = root.querySelector("[data-price-form]");
+    const priceInput = root.querySelector("#intelligence-price");
+    const applyButton = root.querySelector("[data-apply-price]");
+    const insightButton = root.querySelector("[data-generate-insights]");
+    let selectedPrice = null;
+    let currentData = null;
+
+    const formatMoney = (value) => `₹${Number(value).toLocaleString("en-IN")}`;
+    const showStatus = (message, isError = false) => {
+      status.textContent = message;
+      status.classList.toggle("is-error", isError);
+    };
+    const makeElement = (tag, className, text) => {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    };
+    const request = async (url, options = {}) => {
+      const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Request failed. Please try again.");
+      return result;
+    };
+
+    function renderComparables(data) {
+      const { comparables } = data;
+      root.querySelector("[data-comparable-scope]").textContent = comparables.scope || "";
+      root.querySelector("[data-comparable-message]").textContent = comparables.message || "";
+      const summary = root.querySelector("[data-comparable-summary]");
+      summary.replaceChildren();
+      if (comparables.count) {
+        const values = [
+          ["Listings", comparables.count],
+          ["Median", formatMoney(comparables.medianPrice)],
+          ["Observed range", `${formatMoney(comparables.minPrice)}–${formatMoney(comparables.maxPrice)}`],
+        ];
+        if (comparables.suggestedRange) {
+          values.push(["Indicative range", `${formatMoney(comparables.suggestedRange.low)}–${formatMoney(comparables.suggestedRange.high)}`]);
+        }
+        for (const [label, value] of values) {
+          const item = makeElement("div", "comparable-stat");
+          item.append(makeElement("span", "", label), makeElement("strong", "", String(value)));
+          summary.append(item);
+        }
+      }
+      const list = root.querySelector("[data-comparable-list]");
+      list.replaceChildren();
+      for (const property of comparables.properties) {
+        const row = makeElement("li");
+        row.append(
+          makeElement("span", "", `${property.title} · ${property.location}, ${property.country}`),
+          makeElement("strong", "", formatMoney(property.price))
+        );
+        list.append(row);
+      }
+    }
+
+    function renderTrends(trends) {
+      const chart = root.querySelector("[data-trend-chart]");
+      const empty = root.querySelector("[data-trend-empty]");
+      chart.replaceChildren();
+      empty.hidden = trends.some((trend) => trend.bookings > 0);
+      const maximum = Math.max(1, ...trends.map((trend) => trend.bookings));
+      for (const trend of trends) {
+        const bar = makeElement("div", "intelligence-trend-item");
+        bar.setAttribute("aria-label", `${trend.period}: ${trend.bookings} confirmed bookings`);
+        const count = makeElement("span", "intelligence-trend-count", String(trend.bookings));
+        const track = makeElement("div", "intelligence-trend-track");
+        const fill = makeElement("span", "intelligence-trend-fill");
+        fill.style.height = `${Math.max(trend.bookings ? 8 : 0, (trend.bookings / maximum) * 100)}%`;
+        track.append(fill);
+        bar.append(count, track, makeElement("small", "", trend.period.slice(-5)));
+        chart.append(bar);
+      }
+    }
+
+    function renderData(data) {
+      currentData = data;
+      dashboard.hidden = false;
+      root.querySelector("[data-property-location]").textContent = `${data.listing.location}, ${data.listing.country} · ${data.listing.propertyType}`;
+      root.querySelector("[data-property-title]").textContent = data.listing.title;
+      root.querySelector("[data-current-price]").textContent = `${formatMoney(data.listing.currentPrice)} / night`;
+      const metricValues = {
+        confirmedBookingCount: String(data.performance.confirmedBookingCount),
+        realPaidBookingCount: String(data.performance.realPaidBookingCount),
+        testPaymentBookingCount: String(data.performance.testPaymentBookingCount),
+        guestRating: data.reviews.averageRating === null ? "—" : `${data.reviews.averageRating} / 5`,
+        guestReviewCount: `${data.reviews.count} review${data.reviews.count === 1 ? "" : "s"}`,
+        occupancyRate: data.performance.occupancyRate === null ? "—" : `${data.performance.occupancyRate}%`,
+        bookedNights: String(data.performance.bookedNights),
+        paidAccommodationSubtotal: formatMoney(data.performance.paidAccommodationSubtotal),
+        averageStayNights: data.performance.averageStayNights === null ? "—" : `${data.performance.averageStayNights} nights`,
+        cancelledBookingCount: String(data.performance.cancelledBookingCount),
+      };
+      for (const [key, value] of Object.entries(metricValues)) {
+        root.querySelector(`[data-metric="${key}"]`).textContent = value;
+      }
+      renderComparables(data);
+      renderTrends(data.trends);
+
+      const demand = root.querySelector("[data-demand-summary]");
+      demand.replaceChildren();
+      demand.append(makeElement("p", data.demand.available ? "intelligence-demand-value" : "intelligence-muted", data.demand.available
+        ? `Baseline: ${data.demand.estimate} RAZORPAY bookings per month · ${data.demand.direction} recent activity`
+        : data.demand.message));
+      const monthList = root.querySelector("[data-demand-months]");
+      monthList.replaceChildren();
+      for (const month of data.demand.months) {
+        const item = makeElement("span", "intelligence-month", `${month.month}: ${month.bookings}`);
+        monthList.append(item);
+      }
+
+      const alerts = root.querySelector("[data-alerts]");
+      alerts.replaceChildren();
+      if (!data.anomalies.length) {
+        alerts.append(makeElement("li", "intelligence-muted", "No unusual patterns met the minimum evidence thresholds."));
+      } else {
+        for (const alert of data.anomalies) alerts.append(makeElement("li", "intelligence-alert", alert.message));
+      }
+
+      const notes = root.querySelector("[data-notes]");
+      notes.replaceChildren();
+      for (const note of data.notes) notes.append(makeElement("li", "", note));
+      priceInput.value = data.listing.currentPrice;
+      selectedPrice = null;
+      applyButton.hidden = true;
+      root.querySelector("[data-simulation]").replaceChildren();
+      root.querySelector("[data-insights]").replaceChildren();
+      showStatus(`Showing the ${data.period.days} complete days from ${data.period.start} to ${data.period.endExclusive} (end date excluded).`);
+    }
+
+    async function loadAnalytics() {
+      const listingId = listingSelect.value;
+      if (!listingId) return;
+      dashboard.hidden = true;
+      showStatus("Loading booking and pricing analytics…");
+      try {
+        const data = await request(`/api/analytics/host/listings/${encodeURIComponent(listingId)}?days=${periodSelect.value}`);
+        renderData(data);
+      } catch (error) {
+        showStatus(error.message, true);
+      }
+    }
+
+    async function loadListings() {
+      try {
+        const result = await request("/api/analytics/host/listings");
+        listingSelect.replaceChildren();
+        for (const listing of result.listings) {
+          const option = makeElement("option", "", `${listing.title} · ${listing.location}`);
+          option.value = listing._id;
+          listingSelect.append(option);
+        }
+        listingSelect.disabled = false;
+        if (!result.listings.length) {
+          showStatus("You do not have an active listing yet. Add a listing to see property intelligence.");
+          return;
+        }
+        const requestedId = new URLSearchParams(window.location.search).get("listing");
+        if (requestedId && result.listings.some((listing) => listing._id === requestedId)) listingSelect.value = requestedId;
+        await loadAnalytics();
+      } catch (error) {
+        showStatus(error.message, true);
+      }
+    }
+
+    listingSelect.addEventListener("change", loadAnalytics);
+    periodSelect.addEventListener("change", loadAnalytics);
+
+    priceForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!currentData) return;
+      const simulation = root.querySelector("[data-simulation]");
+      simulation.replaceChildren(makeElement("p", "intelligence-muted", "Calculating a price scenario…"));
+      applyButton.hidden = true;
+      try {
+        const result = await request(`/api/analytics/host/listings/${encodeURIComponent(currentData.listing.id)}/simulate-price`, {
+          method: "POST",
+          body: JSON.stringify({ price: priceInput.value, days: periodSelect.value }),
+        });
+        selectedPrice = result.simulatedPrice;
+        simulation.replaceChildren();
+        const comparison = result.nightlyDifference === 0
+          ? "The simulated rate matches the current nightly price."
+          : `This scenario is ${formatMoney(Math.abs(result.nightlyDifference))} ${result.nightlyDifference > 0 ? "higher" : "lower"} per night (${Math.abs(result.percentageDifference)}%) than the current rate.`;
+        simulation.append(makeElement("p", "intelligence-simulation-result", comparison));
+        if (result.revenueImpact) {
+          simulation.append(makeElement("p", "intelligence-muted", `${result.revenueImpact.note} Illustrative subtotal: ${formatMoney(result.revenueImpact.currentAccommodationSubtotal)} at the current price versus ${formatMoney(result.revenueImpact.simulatedAccommodationSubtotal)} at the simulated price.`));
+        } else {
+          simulation.append(makeElement("p", "intelligence-muted", result.revenueImpactMessage));
+        }
+        applyButton.hidden = selectedPrice === currentData.listing.currentPrice;
+      } catch (error) {
+        simulation.replaceChildren(makeElement("p", "intelligence-error", error.message));
+      }
+    });
+
+    applyButton.addEventListener("click", async () => {
+      if (selectedPrice === null || !currentData) return;
+      const accepted = window.confirm(`Change "${currentData.listing.title}" from ${formatMoney(currentData.listing.currentPrice)} to ${formatMoney(selectedPrice)} per night? This will update the saved listing price.`);
+      if (!accepted) return;
+      applyButton.disabled = true;
+      try {
+        const result = await request(`/api/analytics/host/listings/${encodeURIComponent(currentData.listing.id)}/apply-price`, {
+          method: "POST",
+          body: JSON.stringify({ price: selectedPrice, confirmPriceChange: true }),
+        });
+        showStatus(result.message);
+        await loadAnalytics();
+      } catch (error) {
+        showStatus(error.message, true);
+      } finally {
+        applyButton.disabled = false;
+      }
+    });
+
+    insightButton.addEventListener("click", async () => {
+      if (!currentData) return;
+      insightButton.disabled = true;
+      const insights = root.querySelector("[data-insights]");
+      insights.replaceChildren(makeElement("li", "intelligence-muted", "Reviewing verified metrics…"));
+      try {
+        const result = await request(`/api/analytics/host/listings/${encodeURIComponent(currentData.listing.id)}/insights`, {
+          method: "POST",
+          body: JSON.stringify({ days: periodSelect.value }),
+        });
+        insights.replaceChildren();
+        for (const insight of result.insights) {
+          const item = makeElement("li", "intelligence-insight");
+          item.append(makeElement("strong", "", insight.title), makeElement("span", "", insight.text));
+          insights.append(item);
+        }
+        if (result.message) insights.append(makeElement("li", "intelligence-muted", result.message));
+      } catch (error) {
+        insights.replaceChildren(makeElement("li", "intelligence-error", error.message));
+      } finally {
+        insightButton.disabled = false;
+      }
+    });
+
+    loadListings();
+  })();
+</script>

@@ -12,6 +12,7 @@
 
     <form class="listing-form" method="POST" action="/listings/<%= listing._id %>?_method=PUT" enctype="multipart/form-data">
       <% if (formError) { %><p class="form-error" role="alert"><%= formError %></p><% } %>
+      <%- include("_host-assistant.ejs", { isDraft: false, listing }) %>
       <div class="form-field">
         <label for="title">Title</label>
         <input id="title" name="listing[title]" value="<%= listing.title %>" type="text" required />
@@ -33,6 +34,10 @@
           <% } %>
         </div>
         <div id="existing-image-fields"></div>
+      </div>
+      <div class="form-field">
+        <label for="imageUrl">Or image URL</label>
+        <input id="imageUrl" name="listing[imageUrl]" type="url" placeholder="https://images.unsplash.com/..." />
       </div>
       <div class="form-row">
         <div class="form-field">

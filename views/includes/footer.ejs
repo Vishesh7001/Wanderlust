@@ -1,15 +1,47 @@
-<footer>
-    <div class="f-info">
-        <div class="f-info-socials">
-            <i class="fa-brands fa-square-facebook"></i>
-            <i class="fa-brands fa-square-instagram"></i>
-            <i class="fa-brands fa-linkedin"></i>
-
+<footer class="site-footer">
+    <div class="site-footer-main container">
+        <div class="site-footer-brand">
+            <a class="site-footer-logo" href="/" aria-label="WanderLust home">
+                <span class="site-footer-mark"><i class="fa-regular fa-compass"></i></span>
+                <span>WanderLust</span>
+            </a>
+            <p>Find a place to slow down, explore somewhere new, and feel at home along the way.</p>
+            <div class="site-footer-social">
+                <h2>Follow us</h2>
+                <div class="site-footer-social-links">
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+                    </a>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                        <i class="fa-brands fa-linkedin-in" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
         </div>
-        <div> &copy; WanderLust Private Limited</div>
-        <div class="f-info-links">
-            <a href="/privacy">Privacy</a>
-            <a href="/terms">Terms</a>
+
+        <nav class="site-footer-nav" aria-label="Explore WanderLust">
+            <h2>Explore</h2>
+            <a href="/listings">Find a stay</a>
+            <a href="/ai-assistant">AI travel assistant</a>
+        </nav>
+
+        <nav class="site-footer-nav" aria-label="Your WanderLust account">
+            <h2>Your account</h2>
+            <a href="/wishlist">Wishlist</a>
+            <a href="/my-trips">My trips</a>
+        </nav>
+    </div>
+
+    <div class="site-footer-bottom">
+        <div class="container site-footer-bottom-inner">
+            <p>&copy; <%= new Date().getFullYear() %> WanderLust Private Limited</p>
+            <nav class="site-footer-legal" aria-label="Legal">
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+            </nav>
         </div>
     </div>
 </footer>

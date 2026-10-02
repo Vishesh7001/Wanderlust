@@ -44,5 +44,6 @@ bookingSchema.index(
   }
 );
 bookingSchema.index({ user: 1, checkIn: -1 });
+bookingSchema.index({ listing: 1, checkIn: -1 });
 
 module.exports = mongoose.model("Booking", bookingSchema);

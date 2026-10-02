@@ -1,44 +1,75 @@
-<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top wander-navbar">
-  <div class="container-fluid">
+<nav class="navbar navbar-expand-lg bg-body-light border-bottom sticky-top wander-navbar">
+  <div class="container-fluid wander-navbar-container">
     <a class="navbar-brand wander-brand" href="/">
       <i class="fa-regular fa-compass"></i>
-      <span>WanderLust</span>
+      <span class="wander-brand-title">WanderLust</span>
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler wander-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+    <div class="collapse navbar-collapse wander-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav wander-nav wander-primary-nav">
         <a class="nav-link nav-link-home" href="/">
           <i class="fa-solid fa-house"></i>
-          Home
+          <span>Home</span>
         </a>
         <a class="nav-link" href="/listings">
           <i class="fa-solid fa-compass"></i>
-          Explore stays
+          <span>Explore stays</span>
         </a>
-        <a class="nav-link" href="/ai-assistant"><i class="fa-solid fa-wand-magic-sparkles"></i> AI travel assistant</a>
+        <a class="nav-link wander-nav-ai" href="/ai-assistant">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>AI travel assistant</span>
+        </a>
         <% if (currentUser) { %>
-          <a class="nav-link" href="/wishlist"><i class="fa-regular fa-heart"></i> Wishlist</a>
-          <a class="nav-link" href="/my-trips">My Trips</a>
+          <a class="nav-link" href="/wishlist">
+            <i class="fa-regular fa-heart"></i>
+            <span>Wishlist</span>
+          </a>
+          <a class="nav-link" href="/my-trips">
+            <i class="fa-solid fa-suitcase-rolling"></i>
+            <span>My Trips</span>
+          </a>
         <% } %>
       </div>
       <div class="navbar-nav wander-nav wander-account-nav">
         <% if (currentUser) { %>
           <a class="nav-link nav-link-cta" href="/listings/new">
             <i class="fa-solid fa-plus"></i>
-            Add new Listing
+            <span>Add new Listing</span>
           </a>
-          <a class="nav-link" href="/my-listings">My Listings</a>
-          <% if (currentUser.role === "host" || currentUser.role === "admin") { %><a class="nav-link" href="/host/bookings">Bookings</a><% } %>
-          <a class="nav-link nav-user" href="/profile">
-            <% if (currentUser.profileImage) { %><img class="nav-user-avatar" src="<%= currentUser.profileImage %>" alt="" /><% } else { %><span class="nav-user-avatar"><i class="fa-regular fa-user"></i></span><% } %>
+          <a class="nav-link" href="/my-listings">
+            <i class="fa-regular fa-folder-open"></i>
+            <span>My Listings</span>
+          </a>
+          <% if (currentUser.role === "host" || currentUser.role === "admin") { %>
+            <a class="nav-link" href="/host/bookings">
+              <i class="fa-regular fa-calendar-check"></i>
+              <span>Bookings</span>
+            </a>
+            <a class="nav-link" href="/host/intelligence">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>Property intelligence</span>
+            </a>
+          <% } %>
+          <a class="nav-link nav-user" href="/profile" title="View Profile">
+            <% if (currentUser.profileImage) { %>
+              <img class="nav-user-avatar" src="<%= currentUser.profileImage %>" alt="<%= currentUser.name || currentUser.username %>" />
+            <% } else { %>
+              <span class="nav-user-avatar"><i class="fa-regular fa-user"></i></span>
+            <% } %>
             <span class="nav-user-name"><%= currentUser.name || currentUser.username %></span>
           </a>
-          <button class="nav-logout" type="button" data-logout>Logout</button>
+          <button class="nav-logout" type="button" data-logout title="Logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span>Logout</span>
+          </button>
         <% } else { %>
-          <a class="nav-link" href="/login">Login</a>
-          <a class="nav-link nav-link-cta" href="/signup"><i class="fa-solid fa-arrow-right"></i> Sign up</a>
+          <a class="nav-link nav-link-login" href="/login">Login</a>
+          <a class="nav-link nav-link-cta" href="/signup">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span>Sign up</span>
+          </a>
         <% } %>
       </div>
     </div>
@@ -46,16 +77,17 @@
 </nav>
 <% if (currentUser) { %>
   <script>
-    document.querySelector("[data-logout]").addEventListener("click", async () => {
-      const button = document.querySelector("[data-logout]");
-      button.disabled = true;
-      try {
-        const response = await fetch("/logout", { method: "POST" });
-        if (response.ok) window.location.href = "/login";
-        else button.disabled = false;
-      } catch {
-        button.disabled = false;
-      }
+    document.querySelectorAll("[data-logout]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          const response = await fetch("/logout", { method: "POST" });
+          if (response.ok) window.location.href = "/login";
+          else button.disabled = false;
+        } catch {
+          button.disabled = false;
+        }
+      });
     });
   </script>
 <% } %>

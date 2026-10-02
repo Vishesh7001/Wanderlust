@@ -1,17 +1,38 @@
 <% layout("layouts/boilerplate") %>
-<main class="listings-page" data-show-welcome="<%= showWelcome ? "true" : "false" %>">
-  <% if (showWelcome) { %>
+<main class="listings-page" data-show-welcome="<%= (typeof showWelcome !== "undefined" && showWelcome) ? "true" : "false" %>">
+  <% if (typeof showWelcome !== "undefined" && showWelcome) { %>
     <div class="welcome-toast" role="status">Welcome to WanderLust</div>
   <% } %>
   <header class="listings-heading">
     <div>
-      <p class="form-eyebrow"><%= isWishlist ? "Saved for later" : isMyListings ? "Your hosted stays" : "A good place to start" %></p>
-      <h1><%= pageTitle || "Find your next stay" %></h1>
+      <p class="form-eyebrow"><%= (typeof isWishlist !== "undefined" && isWishlist) ? "Saved for later" : (typeof isMyListings !== "undefined" && isMyListings) ? "Your hosted stays" : "A good place to start" %></p>
+      <h1><%= (typeof pageTitle !== "undefined" && pageTitle) ? pageTitle : "Find your next stay" %></h1>
     </div>
-    <% if (isMyListings) { %>
+    <% if (typeof isMyListings !== "undefined" && isMyListings) { %>
       <a class="form-submit" href="/listings/new"><i class="fa-solid fa-plus"></i> Add a listing</a>
     <% } %>
   </header>
+
+  <% if (typeof showRecommendations !== "undefined" && showRecommendations) { %>
+    <section class="recommendations-section" aria-labelledby="recommendations-title">
+      <div class="recommendations-heading">
+        <p class="form-eyebrow"><i class="fa-solid fa-sparkles"></i> <%= (typeof recommendations !== "undefined" && recommendations && recommendations.personalized) ? "Picked from your activity" : "Guest favorites and new stays" %></p>
+        <h2 id="recommendations-title"><%= (typeof recommendations !== "undefined" && recommendations) ? recommendations.title : "Stay recommendations" %></h2>
+      </div>
+      <% if (typeof recommendationError !== "undefined" && recommendationError) { %>
+        <p class="listing-state listing-state-error" role="status"><%= recommendationError %></p>
+      <% } else if (typeof recommendations !== "undefined" && recommendations && recommendations.items && recommendations.items.length) { %>
+        <div class="recommendations-grid">
+          <% for (const item of recommendations.items) { %>
+            <article class="recommendation-card">
+              <%- include("_card.ejs", { listing: item.listing }) %>
+              <p class="recommendation-reason"><i class="fa-solid fa-lightbulb"></i> <%= item.reason %></p>
+            </article>
+          <% } %>
+        </div>
+      <% } %>
+    </section>
+  <% } %>
 
   <% if (!isWishlist && !isMyListings) { %>
     <form class="listing-search" id="listing-search" method="GET" action="/listings">

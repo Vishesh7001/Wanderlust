@@ -3,8 +3,10 @@ const mongoose = require("mongoose");
 const Listing = require("../models/listing.js");
 const Review = require("../models/review.js");
 const { requireLogin } = require("../middleware/auth.js");
+const { createReviewAnalysisService, ReviewInsightsError } = require("../services/ai/reviewAnalysisService.js");
 
 const router = express.Router();
+const reviewAnalysis = createReviewAnalysisService();
 
 router.get("/listings/:listingId/reviews", async (req, res) => {
   try {
@@ -18,6 +20,21 @@ router.get("/listings/:listingId/reviews", async (req, res) => {
     res.json({ reviews });
   } catch (err) {
     res.status(500).json({ error: "Unable to load reviews." });
+  }
+});
+
+router.get("/listings/:listingId/review-insights", async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.listingId)) {
+    return res.status(400).json({ error: "Invalid listing id." });
+  }
+  try {
+    const insights = await reviewAnalysis.getInsights(req.params.listingId);
+    if (!insights) return res.status(404).json({ error: "Listing not found." });
+    res.json(insights);
+  } catch (error) {
+    if (error instanceof ReviewInsightsError) return res.status(error.status).json({ error: error.message });
+    console.error("[review-insights] Could not load guest insights.", { errorType: error.name || "unknown" });
+    res.status(500).json({ error: "Unable to load guest insights right now." });
   }
 });
 

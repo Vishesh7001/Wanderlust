@@ -2,6 +2,22 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
+const reviewInsightsSchema = new Schema({
+	version: { type: Number, required: true },
+	sourceHash: { type: String, required: true },
+	reviewCount: { type: Number, required: true, min: 0 },
+	analyzedReviewCount: { type: Number, required: true, min: 0 },
+	sentiment: {
+		type: String,
+		enum: ["mostly_positive", "mixed", "mostly_negative"],
+		required: true,
+	},
+	positiveTopics: { type: [String], default: [] },
+	negativeTopics: { type: [String], default: [] },
+	summary: { type: String, required: true, maxlength: 1200 },
+	generatedAt: { type: Date, required: true },
+}, { _id: false });
+
 const listingSchema = new Schema({
 	title: {
 		type: String,
@@ -31,6 +47,7 @@ const listingSchema = new Schema({
 	amenities: { type: [String], default: [] },
 	owner: { type: Schema.Types.ObjectId, ref: "User", index: true },
 	isActive: { type: Boolean, default: true, index: true },
+	reviewInsights: { type: reviewInsightsSchema, default: undefined },
 }, { timestamps: true });
 
 const Listing = mongoose.model("Listing", listingSchema);

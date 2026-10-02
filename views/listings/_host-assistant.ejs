@@ -1,0 +1,296 @@
+<section
+  class="host-ai-panel"
+  data-host-ai-mode="<%= isDraft ? "draft" : "listing" %>"
+  data-listing-id="<%= isDraft ? "" : listing._id %>"
+  aria-labelledby="host-ai-title"
+>
+  <div class="host-ai-heading">
+    <p class="form-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> Host tools</p>
+    <h2 id="host-ai-title">AI Listing Assistant</h2>
+    <p><%= isDraft ? "Suggestions use the details currently entered in this form." : "Suggestions use this listing's saved details; save any form edits first to include them." %> Review AI output before using it. Nothing is saved automatically.</p>
+  </div>
+
+  <div class="host-ai-actions">
+    <button class="clear-filters" type="button" data-ai-task="description">Generate description</button>
+    <button class="clear-filters" type="button" data-ai-task="titles">Generate title options</button>
+    <button class="clear-filters" type="button" data-ai-task="highlights">Generate highlights</button>
+    <% if (!isDraft) { %>
+      <button class="clear-filters" type="button" data-ai-action="quality">Analyze listing quality</button>
+      <button class="clear-filters" type="button" data-ai-action="photos">Analyze uploaded photos</button>
+    <% } %>
+  </div>
+  <% if (!isDraft) { %>
+    <p class="form-help">Photo analysis uses up to 3 uploaded photos, each no larger than 1 MB. External image links are not sent for analysis.</p>
+  <% } %>
+
+  <p class="host-ai-status" data-ai-status role="status" aria-live="polite"></p>
+  <section class="host-ai-output" data-ai-output hidden aria-live="polite">
+    <h3 data-ai-output-title></h3>
+    <div data-ai-output-content></div>
+    <div class="host-ai-output-actions">
+      <button class="form-submit" type="button" data-ai-use hidden>Use selected content</button>
+      <button class="clear-filters" type="button" data-ai-cancel>Cancel</button>
+    </div>
+  </section>
+
+  <% if (!isDraft) { %>
+    <section class="host-ai-quality">
+      <h3>Listing quality results</h3>
+      <div data-ai-quality-results></div>
+    </section>
+    <div class="host-ai-question-form" data-ai-question-form>
+      <label for="host-ai-question">Ask about this listing</label>
+      <div class="host-ai-question-row">
+        <input id="host-ai-question" type="text" maxlength="1000" placeholder="How can I improve my listing?" required />
+        <button class="form-submit" type="button">Ask assistant</button>
+      </div>
+    </div>
+    <section class="host-ai-photo-results" data-ai-photo-results hidden aria-live="polite"></section>
+  <% } %>
+</section>
+
+<script>
+  (() => {
+    const panel = document.querySelector(".host-ai-panel");
+    const listingForm = document.querySelector(".listing-form");
+    const status = panel.querySelector("[data-ai-status]");
+    const output = panel.querySelector("[data-ai-output]");
+    const outputTitle = panel.querySelector("[data-ai-output-title]");
+    const outputContent = panel.querySelector("[data-ai-output-content]");
+    const useButton = panel.querySelector("[data-ai-use]");
+    const qualityResults = panel.querySelector("[data-ai-quality-results]");
+    const photoResults = panel.querySelector("[data-ai-photo-results]");
+    let generated = null;
+    let generatedTask = "";
+
+    function setStatus(message, isError = false) {
+      status.textContent = message;
+      status.classList.toggle("host-ai-error", isError);
+    }
+
+    function currentDraft() {
+      const read = (name) => listingForm.querySelector(`[name="listing[${name}]"]`)?.value?.trim() || "";
+      return {
+        title: read("title"),
+        description: read("description"),
+        location: read("location"),
+        country: read("country"),
+        propertyType: read("propertyType"),
+        price: read("price"),
+        bedrooms: read("bedrooms"),
+        bathrooms: read("bathrooms"),
+        maxGuests: read("maxGuests"),
+        amenities: [...listingForm.querySelectorAll('input[name="listing[amenities]"]:checked')].map((input) => input.value),
+      };
+    }
+
+    function resetOutput() {
+      generated = null;
+      generatedTask = "";
+      outputContent.replaceChildren();
+      output.hidden = true;
+      useButton.hidden = true;
+      setStatus("");
+    }
+
+    function renderGenerated(task, result) {
+      generated = result;
+      generatedTask = task;
+      outputContent.replaceChildren();
+      useButton.hidden = false;
+      output.hidden = false;
+      if (task === "description") {
+        outputTitle.textContent = "Suggested description";
+        const preview = document.createElement("p");
+        preview.className = "host-ai-generated-description";
+        preview.textContent = result.description;
+        outputContent.append(preview);
+      } else if (task === "titles") {
+        outputTitle.textContent = "Choose a title";
+        result.titles.forEach((title, index) => {
+          const label = document.createElement("label");
+          label.className = "host-ai-title-option";
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = "host-ai-selected-title";
+          radio.value = title;
+          radio.checked = index === 0;
+          label.append(radio, document.createTextNode(title));
+          outputContent.append(label);
+        });
+      } else {
+        outputTitle.textContent = "Choose highlights to add";
+        result.highlights.forEach((highlight) => {
+          const label = document.createElement("label");
+          label.className = "host-ai-highlight-option";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = highlight;
+          label.append(checkbox, document.createTextNode(highlight));
+          outputContent.append(label);
+        });
+      }
+    }
+
+    async function requestContent(task, button) {
+      resetOutput();
+      button.disabled = true;
+      button.dataset.originalText = button.textContent;
+      button.textContent = "Generating...";
+      setStatus("Generating suggestions from listing details...");
+      try {
+        const isDraft = panel.dataset.hostAiMode === "draft";
+        const url = isDraft
+          ? "/api/ai/host/listing-draft/generate"
+          : `/api/ai/host/listings/${encodeURIComponent(panel.dataset.listingId)}/generate`;
+        const body = isDraft ? { task, listing: currentDraft() } : { task };
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Could not generate listing content.");
+        renderGenerated(task, result);
+        setStatus("Review the suggestion, then choose whether to use it.");
+      } catch (error) {
+        setStatus(error.message, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = button.dataset.originalText;
+      }
+    }
+
+    panel.querySelectorAll("[data-ai-task]").forEach((button) => {
+      button.addEventListener("click", () => requestContent(button.dataset.aiTask, button));
+    });
+
+    useButton.addEventListener("click", () => {
+      if (!generated) return;
+      if (generatedTask === "titles") {
+        const selected = outputContent.querySelector('input[name="host-ai-selected-title"]:checked');
+        if (!selected) return setStatus("Select a title before applying it.", true);
+        listingForm.querySelector('[name="listing[title]"]').value = selected.value;
+      } else if (generatedTask === "description") {
+        listingForm.querySelector('[name="listing[description]"]').value = generated.description;
+      } else {
+        const selected = [...outputContent.querySelectorAll('input[type="checkbox"]:checked')].map((input) => input.value);
+        if (!selected.length) return setStatus("Select at least one highlight before applying it.", true);
+        const descriptionField = listingForm.querySelector('[name="listing[description]"]');
+        const addition = `Highlights:\n${selected.map((item) => `• ${item}`).join("\n")}`;
+        const nextDescription = descriptionField.value.trim()
+          ? `${descriptionField.value.trim()}\n\n${addition}`
+          : addition;
+        if (nextDescription.length > 4000) return setStatus("There is not enough room in the description for those highlights.", true);
+        descriptionField.value = nextDescription;
+      }
+      setStatus("Added to the form. Save the listing to keep your approved changes.");
+      output.hidden = true;
+      useButton.hidden = true;
+    });
+
+    panel.querySelector("[data-ai-cancel]").addEventListener("click", resetOutput);
+
+    const qualityButton = panel.querySelector('[data-ai-action="quality"]');
+    qualityButton?.addEventListener("click", async () => {
+      qualityButton.disabled = true;
+      setStatus("Checking listing details...");
+      qualityResults.replaceChildren();
+      try {
+        const response = await fetch(`/api/ai/host/listings/${encodeURIComponent(panel.dataset.listingId)}/quality`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to analyze listing quality.");
+        const list = document.createElement("ul");
+        list.className = "host-ai-checklist";
+        result.information.forEach((item) => {
+          const row = document.createElement("li");
+          row.textContent = `${item.complete ? "✓" : "⚠"} ${item.label}${item.complete ? "" : ` — ${item.suggestion}`}`;
+          list.append(row);
+        });
+        const photos = document.createElement("p");
+        photos.textContent = `Photos: ${result.photos.count}; ${result.photos.complete ? "photo count is complete" : result.photos.suggestion}`;
+        const reviews = document.createElement("p");
+        reviews.textContent = `Reviews: ${result.reviews.message}${result.reviews.ratingAverage === null ? "" : ` Average rating ${result.reviews.ratingAverage.toFixed(1)}.`}`;
+        const bookings = document.createElement("p");
+        bookings.textContent = result.bookings.message;
+        qualityResults.append(list, photos, reviews, bookings);
+        setStatus("Listing quality analysis is based on saved listing, review, and booking data.");
+      } catch (error) {
+        setStatus(error.message, true);
+      } finally {
+        qualityButton.disabled = false;
+      }
+    });
+
+    const photoButton = panel.querySelector('[data-ai-action="photos"]');
+    photoButton?.addEventListener("click", async () => {
+      photoButton.disabled = true;
+      photoResults.hidden = false;
+      photoResults.replaceChildren();
+      setStatus("Analyzing uploaded photos...");
+      try {
+        const response = await fetch(`/api/ai/host/listings/${encodeURIComponent(panel.dataset.listingId)}/analyze-photos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to analyze photos.");
+        const list = document.createElement("ul");
+        result.photos.forEach((photo) => {
+          const row = document.createElement("li");
+          const categories = photo.categories.length ? photo.categories.join(", ").replaceAll("_", " ") : "No property area confidently identified";
+          const issues = photo.issues.length ? `; possible issues: ${photo.issues.join(", ").replaceAll("_", " ")}` : "";
+          row.textContent = `Photo ${photo.imageIndex + 1}: ${categories}${issues}`;
+          list.append(row);
+        });
+        const coverage = document.createElement("p");
+        coverage.textContent = `Coverage: ${result.coverage.map((item) => `${item.detected ? "✓" : "⚠"} ${item.category.replaceAll("_", " ")}`).join(" · ")}`;
+        photoResults.append(list, coverage);
+        result.suggestions.forEach((suggestion) => {
+          const note = document.createElement("p");
+          note.textContent = suggestion;
+          photoResults.append(note);
+        });
+        setStatus(`Analyzed ${result.analyzedImageCount} uploaded photos. No images were changed.`);
+      } catch (error) {
+        setStatus(error.message, true);
+      } finally {
+        photoButton.disabled = false;
+      }
+    });
+
+    const questionForm = panel.querySelector("[data-ai-question-form]");
+    questionForm?.querySelector("button").addEventListener("click", async () => {
+      const questionInput = questionForm.querySelector("input");
+      const askButton = questionForm.querySelector("button");
+      if (!questionInput.value.trim()) {
+        questionInput.focus();
+        return setStatus("Enter a question about this listing.", true);
+      }
+      askButton.disabled = true;
+      setStatus("Checking your listing and preparing suggestions...");
+      try {
+        const response = await fetch(`/api/ai/host/listings/${encodeURIComponent(panel.dataset.listingId)}/assistant`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: questionInput.value.trim() }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to answer your question.");
+        outputTitle.textContent = "Host assistant";
+        const answer = document.createElement("p");
+        answer.textContent = result.answer;
+        outputContent.replaceChildren(answer);
+        output.hidden = false;
+        useButton.hidden = true;
+        generated = null;
+        setStatus("Answer based on this listing's saved details.");
+      } catch (error) {
+        setStatus(error.message, true);
+      } finally {
+        askButton.disabled = false;
+      }
+    });
+  })();
+</script>

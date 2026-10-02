@@ -57,6 +57,7 @@
 
     <% if (isOwner) { %>
       <div class="listing-actions">
+        <a class="edit-button" href="/host/intelligence?listing=<%= listing._id %>"><i class="fa-solid fa-chart-line"></i> Property intelligence</a>
         <a class="edit-button" href="/listings/<%= listing._id %>/edit"><i class="fa-solid fa-pen-to-square"></i> Edit listing</a>
         <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" onsubmit="return confirm('Delete this listing? This cannot be undone.');">
           <button class="delete-button" type="submit"><i class="fa-regular fa-trash-can"></i> Delete listing</button>
@@ -133,6 +134,28 @@
         <p>See what guests loved about staying here.</p>
       </div>
 
+      <section class="review-insights-panel" aria-labelledby="review-insights-title">
+        <div class="review-insights-heading">
+          <p class="listing-eyebrow"><i class="fa-solid fa-sparkles"></i> AI-powered, based on guest reviews</p>
+          <h3 id="review-insights-title">AI Guest Insights</h3>
+        </div>
+        <p class="review-insights-status" id="review-insights-status" role="status">Checking review data...</p>
+        <div class="review-insights-content" id="review-insights-content" hidden>
+          <p class="review-insights-sentiment" id="review-insights-sentiment"></p>
+          <div class="review-insights-topics">
+            <div>
+              <h4>Guests frequently liked</h4>
+              <ul id="review-insights-positive"></ul>
+            </div>
+            <div>
+              <h4>Common concerns</h4>
+              <ul id="review-insights-negative"></ul>
+            </div>
+          </div>
+          <p class="review-insights-summary" id="review-insights-summary"></p>
+        </div>
+      </section>
+
       <div class="reviews-summary">
         <div class="rating-overview">
           <strong id="average-rating">4.3</strong>
@@ -192,6 +215,12 @@
     const averageStars = document.querySelector("#average-stars");
     const reviewCount = document.querySelector("#review-count");
     const ratingBreakdown = document.querySelector("#rating-breakdown");
+    const reviewInsightsStatus = document.querySelector("#review-insights-status");
+    const reviewInsightsContent = document.querySelector("#review-insights-content");
+    const reviewInsightsSentiment = document.querySelector("#review-insights-sentiment");
+    const reviewInsightsPositive = document.querySelector("#review-insights-positive");
+    const reviewInsightsNegative = document.querySelector("#review-insights-negative");
+    const reviewInsightsSummary = document.querySelector("#review-insights-summary");
     const reviewForm = document.querySelector("#review-form");
     const reviewRating = document.querySelector("#review-rating");
     const reviewSuccess = document.querySelector("#review-success");
@@ -502,6 +531,42 @@
       }).join("");
     }
 
+    function formatInsightTopic(topic) {
+      return topic.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+    }
+
+    async function loadReviewInsights() {
+      reviewInsightsStatus.textContent = "Checking review data...";
+      reviewInsightsContent.hidden = true;
+      try {
+        const response = await fetch(`/api/listings/${listingId}/review-insights`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to load guest insights.");
+        if (!result.available) {
+          reviewInsightsStatus.textContent = result.message;
+          return;
+        }
+
+        reviewInsightsSentiment.textContent = `Overall guest sentiment: ${result.sentiment.replaceAll("_", " ")}`;
+        reviewInsightsPositive.replaceChildren(...result.positiveTopics.map((topic) => {
+          const item = document.createElement("li");
+          item.textContent = formatInsightTopic(topic);
+          return item;
+        }));
+        reviewInsightsNegative.replaceChildren(...result.negativeTopics.map((topic) => {
+          const item = document.createElement("li");
+          item.textContent = formatInsightTopic(topic);
+          return item;
+        }));
+        reviewInsightsSummary.textContent = result.summary;
+        reviewInsightsStatus.textContent = `Based on ${result.analyzedReviewCount} distinct guest reviews.`;
+        reviewInsightsContent.hidden = false;
+      } catch (error) {
+        reviewInsightsStatus.textContent = error.message;
+        reviewInsightsStatus.classList.add("review-insights-error");
+      }
+    }
+
     async function loadReviews() {
       reviewsList.innerHTML = '<p class="reviews-loading">Loading reviews...</p>';
       try {
@@ -578,6 +643,7 @@
           document.querySelectorAll(".star-choice").forEach((star) => star.classList.remove("selected"));
           reviewSuccess.classList.remove("review-error");
           reviewSuccess.textContent = "Review submitted successfully.";
+          loadReviewInsights();
         })
         .catch((error) => {
           reviewSuccess.classList.add("review-error");
@@ -587,4 +653,5 @@
 
     loadCurrentUser().catch(() => {});
     loadReviews();
+    loadReviewInsights();
   </script>

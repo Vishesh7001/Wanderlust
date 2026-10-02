@@ -19,16 +19,19 @@ const wishlistApiRoutes = require("./routes/wishlist.js");
 const bookingApiRoutes = require("./routes/bookings.js");
 const paymentApiRoutes = require("./routes/payments.js");
 const hostBookingApiRoutes = require("./routes/hostBookings.js");
+const hostAnalyticsRoutes = require("./routes/hostAnalytics.js");
 const aiRoutes = require("./routes/ai.js");
 const Booking = require("./models/booking.js");
 const { attachUser, requirePageLogin } = require("./middleware/auth.js");
 const { listingImages } = require("./middleware/uploads.js");
 const { buildFilters, getListingInput, validationMessage } = require("./utils/listingUtils.js");
 const { createTravelSearchService, normalizeConversation, TravelSearchError } = require("./services/ai/travelSearchService.js");
+const { createRecommendationService } = require("./services/recommendationService.js");
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const PORT = Number(process.env.PORT) || 8080;
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const recommendationService = createRecommendationService();
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -67,6 +70,7 @@ app.use("/api/wishlist", wishlistApiRoutes);
 app.use("/api/bookings", bookingApiRoutes);
 app.use("/api/payments", paymentApiRoutes);
 app.use("/api/host/bookings", hostBookingApiRoutes);
+app.use("/api/analytics", hostAnalyticsRoutes.router);
 app.use("/api/ai", aiRoutes);
 
 const travelSearch = createTravelSearchService();
@@ -134,6 +138,9 @@ app.get("/my-listings", requirePageLogin, async (req, res) => {
     pageTitle: "My Listings",
     isMyListings: true,
     isWishlist: false,
+    showRecommendations: false,
+    recommendations: null,
+    recommendationError: "",
   });
 });
 
@@ -148,6 +155,9 @@ app.get("/wishlist", requirePageLogin, async (req, res) => {
     pageTitle: "My Wishlist",
     isMyListings: false,
     isWishlist: true,
+    showRecommendations: false,
+    recommendations: null,
+    recommendationError: "",
   });
 });
 
@@ -173,10 +183,29 @@ app.get("/host/bookings", requirePageLogin, async (req, res) => {
   res.render("bookings/host.ejs", { bookings });
 });
 
+app.get("/host/intelligence", requirePageLogin, (req, res) => {
+  if (!["host", "admin"].includes(req.user.role)) {
+    return res.status(403).send("Host access is required to view property intelligence.");
+  }
+  res.render("host/intelligence.ejs");
+});
+
 //Index Route
 app.get("/listings", async (req, res) => {
   const filters = buildFilters(req.query);
   const allListings = filters.error ? [] : await Listing.find(filters.query).sort({ createdAt: -1 });
+  const hasSearchFilters = ["location", "country", "title", "minPrice", "maxPrice", "propertyType", "bedrooms", "bathrooms", "amenities"]
+    .some((field) => String(req.query[field] || "").trim());
+  let recommendations = null;
+  let recommendationError = "";
+  if (!filters.error && !hasSearchFilters) {
+    try {
+      recommendations = await recommendationService.getRecommendations(req.user?._id, req.session?.recommendationSearches);
+    } catch (error) {
+      console.error("[recommendations] Could not load recommendations.", { errorType: error.name || "unknown" });
+      recommendationError = "Recommendations are temporarily unavailable.";
+    }
+  }
   res.status(filters.error ? 400 : 200).render("listings/index.ejs", {
     allListings,
     showWelcome: req.query.welcome === "1",
@@ -185,6 +214,9 @@ app.get("/listings", async (req, res) => {
     pageTitle: "Find your next stay",
     isMyListings: false,
     isWishlist: false,
+    showRecommendations: Boolean(recommendations || recommendationError),
+    recommendations,
+    recommendationError,
   });
 });
 

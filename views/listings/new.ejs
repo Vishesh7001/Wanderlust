@@ -12,6 +12,7 @@
 
     <form class="listing-form" method="POST" action="/listings" enctype="multipart/form-data">
       <% if (formError) { %><p class="form-error" role="alert"><%= formError %></p><% } %>
+      <%- include("_host-assistant.ejs", { isDraft: true }) %>
       <div class="form-field">
         <label for="title">Title</label>
         <input id="title" name="listing[title]" placeholder="e.g. Cozy Beachfront Cottage" type="text" required />
@@ -21,10 +22,14 @@
         <textarea id="description" name="listing[description]" placeholder="Tell guests what makes this place special" required></textarea>
       </div>
       <div class="form-field">
-        <label for="image">Property image</label>
+        <label for="image">Property image (Upload)</label>
         <input id="image" name="listing[images]" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
-        <span class="form-help">Choose up to 8 JPG, PNG, WEBP, or GIF images, 5 MB each.</span>
+        <span class="form-help">Upload up to 8 JPG, PNG, WEBP, or GIF images (5 MB each), or provide an image link below.</span>
         <div class="image-preview-grid" id="image-preview" aria-live="polite"></div>
+      </div>
+      <div class="form-field">
+        <label for="imageUrl">Or image URL</label>
+        <input id="imageUrl" name="listing[imageUrl]" type="url" placeholder="https://images.unsplash.com/..." />
       </div>
       <div class="form-row">
         <div class="form-field">

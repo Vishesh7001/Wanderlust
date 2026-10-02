@@ -53,6 +53,16 @@ function getListingInput(body, files = []) {
     const amenities = Array.isArray(body.amenities) ? body.amenities : String(body.amenities).split(",");
     input.amenities = amenities.map((value) => String(value).trim()).filter(Boolean).slice(0, 30);
   }
+  if (body.imageUrl !== undefined && String(body.imageUrl).trim()) {
+    const url = String(body.imageUrl).trim();
+    input.image = url;
+    input.images = [url];
+  }
+  if (body.image !== undefined && typeof body.image === "string" && String(body.image).trim()) {
+    const url = String(body.image).trim();
+    input.image = url;
+    input.images = [url];
+  }
   if (body.existingImages !== undefined) {
     const existingImages = Array.isArray(body.existingImages) ? body.existingImages : [body.existingImages];
     input.images = existingImages.map((value) => String(value).trim()).filter((value) => value.startsWith("/uploads/") || /^https?:\/\//i.test(value)).slice(0, 8);
@@ -61,6 +71,12 @@ function getListingInput(body, files = []) {
   if (files && files.length) {
     input.images = files.map((file) => `/uploads/${file.filename}`);
     input.image = input.images[0];
+  }
+  if (input.images && input.images.length && !input.image) {
+    input.image = input.images[0];
+  }
+  if (input.image && (!input.images || !input.images.length)) {
+    input.images = [input.image];
   }
   return input;
 }
