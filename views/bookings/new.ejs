@@ -14,7 +14,11 @@
   <div class="booking-details-layout">
     <section class="booking-details-card">
       <div class="booking-stay-preview">
-        <img src="<%= listing.image %>" alt="<%= listing.title %>" />
+        <%
+          const newBookingImg = (listing.images && listing.images[0]) || listing.image;
+          const newBookingImgUrl = (typeof newBookingImg === "object" && newBookingImg !== null ? newBookingImg.url : newBookingImg) || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+        %>
+        <img src="<%= newBookingImgUrl %>" alt="<%= listing.title %>" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e';" />
         <div>
           <p class="listing-eyebrow"><%= listing.location %>, <%= listing.country %></p>
           <h2><%= listing.title %></h2>

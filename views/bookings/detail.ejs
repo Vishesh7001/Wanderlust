@@ -9,7 +9,11 @@
   <div class="booking-details-layout">
     <section class="booking-details-card">
       <div class="booking-stay-preview">
-        <img src="<%= booking.listing ? ((booking.listing.images && booking.listing.images[0]) || booking.listing.image) : "" %>" alt="<%= booking.listing ? booking.listing.title : "Unavailable listing" %>" />
+        <%
+          const detailImg = booking.listing ? ((booking.listing.images && booking.listing.images[0]) || booking.listing.image) : "";
+          const detailImgUrl = (typeof detailImg === "object" && detailImg !== null ? detailImg.url : detailImg) || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+        %>
+        <img src="<%= detailImgUrl %>" alt="<%= booking.listing ? booking.listing.title : "Unavailable listing" %>" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e';" />
         <div>
           <p class="listing-eyebrow"><%= booking.listing ? `${booking.listing.location}, ${booking.listing.country}` : "Listing unavailable" %></p>
           <h2><%= booking.listing ? booking.listing.title : "Booking property" %></h2>

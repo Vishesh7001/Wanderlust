@@ -4,6 +4,7 @@ const Listing = require("../models/listing.js");
 const User = require("../models/user.js");
 const { requireLogin } = require("../middleware/auth.js");
 const { listingImages } = require("../middleware/uploads.js");
+const { deleteCloudinaryImage } = require("../cloudConfig.js");
 const { buildFilters, getListingInput, validationMessage } = require("../utils/listingUtils.js");
 
 const router = express.Router();
@@ -61,6 +62,18 @@ async function updateListing(req, res) {
     }
 
     const fields = getListingInput(req.body.listing || req.body, req.listingImages);
+    if (req.listingImages && req.listingImages.length > 0) {
+      if (listing.image && typeof listing.image === "object" && listing.image.filename) {
+        deleteCloudinaryImage(listing.image.filename);
+      }
+      if (Array.isArray(listing.images)) {
+        for (const img of listing.images) {
+          if (img && typeof img === "object" && img.filename) {
+            deleteCloudinaryImage(img.filename);
+          }
+        }
+      }
+    }
     Object.assign(listing, fields);
     await listing.save();
     res.json({ listing });
@@ -79,6 +92,18 @@ router.delete("/:id", requireLogin, async (req, res) => {
       return res.status(403).json({ error: "You can only delete listings you own." });
     }
     listing.isActive = false;
+
+    if (listing.image && typeof listing.image === "object" && listing.image.filename) {
+      deleteCloudinaryImage(listing.image.filename);
+    }
+    if (Array.isArray(listing.images)) {
+      for (const img of listing.images) {
+        if (img && typeof img === "object" && img.filename) {
+          deleteCloudinaryImage(img.filename);
+        }
+      }
+    }
+
     await listing.save();
     await User.updateMany({ wishlist: listing._id }, { $pull: { wishlist: listing._id } });
     res.json({ success: true });

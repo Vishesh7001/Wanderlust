@@ -24,6 +24,7 @@ const aiRoutes = require("./routes/ai.js");
 const Booking = require("./models/booking.js");
 const { attachUser, requirePageLogin } = require("./middleware/auth.js");
 const { listingImages } = require("./middleware/uploads.js");
+const { deleteCloudinaryImage } = require("./cloudConfig.js");
 const {
   buildFilters,
   getListingInput,
@@ -728,13 +729,26 @@ app.put(
         .send("You can only edit listings you own.");
     }
 
-    Object.assign(
-      listing,
-      getListingInput(
-        req.body.listing || {},
-        req.listingImages
-      )
+    const fields = getListingInput(
+      req.body.listing || {},
+      req.listingImages
     );
+
+    // If new images were uploaded, clean up old Cloudinary images
+    if (req.listingImages && req.listingImages.length > 0) {
+      if (listing.image && typeof listing.image === "object" && listing.image.filename) {
+        deleteCloudinaryImage(listing.image.filename);
+      }
+      if (Array.isArray(listing.images)) {
+        for (const img of listing.images) {
+          if (img && typeof img === "object" && img.filename) {
+            deleteCloudinaryImage(img.filename);
+          }
+        }
+      }
+    }
+
+    Object.assign(listing, fields);
 
     try {
       await listing.save();
@@ -790,6 +804,18 @@ app.delete(
     }
 
     listing.isActive = false;
+
+    // Delete image from Cloudinary if filename is stored
+    if (listing.image && typeof listing.image === "object" && listing.image.filename) {
+      deleteCloudinaryImage(listing.image.filename);
+    }
+    if (Array.isArray(listing.images)) {
+      for (const img of listing.images) {
+        if (img && typeof img === "object" && img.filename) {
+          deleteCloudinaryImage(img.filename);
+        }
+      }
+    }
 
     await listing.save();
 

@@ -54,7 +54,7 @@
           <% } %>
           <a class="nav-link nav-user" href="/profile" title="View Profile">
             <% if (currentUser.profileImage) { %>
-              <img class="nav-user-avatar" src="<%= currentUser.profileImage %>" alt="<%= currentUser.name || currentUser.username %>" />
+              <img class="nav-user-avatar" src="<%= currentUser.profileImage %>" alt="<%= currentUser.name || currentUser.username %>" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(currentUser.name || currentUser.username) %>&amp;background=fe424d&amp;color=ffffff';" />
             <% } else { %>
               <span class="nav-user-avatar"><i class="fa-regular fa-user"></i></span>
             <% } %>

@@ -55,21 +55,41 @@ function getListingInput(body, files = []) {
   }
   if (body.imageUrl !== undefined && String(body.imageUrl).trim()) {
     const url = String(body.imageUrl).trim();
-    input.image = url;
-    input.images = [url];
+    input.image = { url, filename: "" };
+    input.images = [{ url, filename: "" }];
   }
   if (body.image !== undefined && typeof body.image === "string" && String(body.image).trim()) {
     const url = String(body.image).trim();
-    input.image = url;
-    input.images = [url];
+    input.image = { url, filename: "" };
+    input.images = [{ url, filename: "" }];
+  }
+  if (body.image !== undefined && typeof body.image === "object" && body.image && body.image.url) {
+    input.image = {
+      url: String(body.image.url).trim(),
+      filename: String(body.image.filename || "").trim(),
+    };
+    input.images = [input.image];
   }
   if (body.existingImages !== undefined) {
     const existingImages = Array.isArray(body.existingImages) ? body.existingImages : [body.existingImages];
-    input.images = existingImages.map((value) => String(value).trim()).filter((value) => value.startsWith("/uploads/") || /^https?:\/\//i.test(value)).slice(0, 8);
-    input.image = input.images[0] || "";
+    input.images = existingImages
+      .map((value) => {
+        if (typeof value === "object" && value !== null && value.url) return value;
+        const str = String(value || "").trim();
+        return str ? { url: str, filename: "" } : null;
+      })
+      .filter(Boolean)
+      .slice(0, 8);
+    input.image = input.images[0] || null;
   }
   if (files && files.length) {
-    input.images = files.map((file) => `/uploads/${file.filename}`);
+    input.images = files.map((file) => {
+      const url = file.path && /^https?:\/\//i.test(file.path)
+        ? file.path
+        : `/uploads/${file.filename}`;
+      const filename = file.filename || "";
+      return { url, filename };
+    });
     input.image = input.images[0];
   }
   if (input.images && input.images.length && !input.image) {
@@ -81,6 +101,15 @@ function getListingInput(body, files = []) {
   return input;
 }
 
+function getListingImageUrl(listing) {
+  if (!listing) return "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+  const img = (listing.images && listing.images.length) ? listing.images[0] : listing.image;
+  if (!img) return "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+  if (typeof img === "string" && img.trim()) return img.trim();
+  if (typeof img === "object" && img.url) return img.url;
+  return "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+}
+
 function validationMessage(error) {
   return Object.values(error.errors).map((item) => item.message).join(" ");
 }
@@ -89,4 +118,4 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-module.exports = { buildFilters, getListingInput, validationMessage };
+module.exports = { buildFilters, getListingInput, getListingImageUrl, validationMessage };

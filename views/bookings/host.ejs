@@ -10,7 +10,11 @@
     <div class="host-booking-list">
       <% for (const booking of bookings) { const listing = booking.listing; %>
         <article class="host-booking-row">
-          <img src="<%= listing ? ((listing.images && listing.images[0]) || listing.image) : "" %>" alt="<%= listing ? listing.title : "Unavailable listing" %>" />
+          <%
+            const hostImg = listing ? ((listing.images && listing.images[0]) || listing.image) : "";
+            const hostImgUrl = (typeof hostImg === "object" && hostImg !== null ? hostImg.url : hostImg) || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+          %>
+          <img src="<%= hostImgUrl %>" alt="<%= listing ? listing.title : "Unavailable listing" %>" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e';" />
           <div class="host-booking-main">
             <p class="listing-eyebrow"><%= booking.user ? (booking.user.name || booking.user.username) : "Guest account" %></p>
             <h2><%= listing ? listing.title : "Booking property" %></h2>

@@ -26,9 +26,13 @@
         <input id="image" name="listing[images]" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
         <span class="form-help">Leave empty to keep current photos; selecting new photos replaces them. Up to 8 images, 5 MB each.</span>
         <div class="image-preview-grid" id="image-preview" aria-live="polite">
-          <% for (const image of (listing.images && listing.images.length ? listing.images : [listing.image])) { %>
+          <%
+            const rawEditImages = (listing.images && listing.images.length ? listing.images : [listing.image]);
+            const editImages = rawEditImages.map(img => (typeof img === "object" && img !== null ? img.url : img)).filter(Boolean);
+          %>
+          <% for (const image of editImages) { %>
             <div class="image-preview-item current-image" data-image-url="<%= image %>">
-              <img src="<%= image %>" alt="Current property image" />
+              <img src="<%= image %>" alt="Current property image" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e';" />
               <button class="image-remove" type="button" aria-label="Remove this image"><i class="fa-solid fa-xmark"></i></button>
             </div>
           <% } %>

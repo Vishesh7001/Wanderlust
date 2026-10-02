@@ -10,15 +10,22 @@
       <h1><%= listing.title %></h1>
     </div>
 
-    <% const displayImages = listing.images && listing.images.length ? listing.images : [listing.image]; %>
+    <%
+      const rawImages = (listing.images && listing.images.length) ? listing.images : [listing.image];
+      const displayImages = rawImages.map(img => {
+        const url = (typeof img === "object" && img !== null) ? (img.url || "") : (img || "");
+        return url.trim() || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+      });
+    %>
     <img
       src="<%= displayImages[0] %>"
       alt="<%= listing.title %>"
       class="listing-detail-image"
+      onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e';"
     />
     <% if (displayImages.length > 1) { %>
       <div class="listing-detail-gallery">
-        <% for (const image of displayImages.slice(1)) { %><img src="<%= image %>" alt="<%= listing.title %>" loading="lazy" /><% } %>
+        <% for (const image of displayImages.slice(1)) { %><img src="<%= image %>" alt="<%= listing.title %>" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e';" /><% } %>
       </div>
     <% } %>
 

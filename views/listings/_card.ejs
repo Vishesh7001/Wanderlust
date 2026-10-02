@@ -3,10 +3,15 @@
 <% const checkIn = typeof selectedCheckIn === "string" ? selectedCheckIn : ""; %>
 <% const checkOut = typeof selectedCheckOut === "string" ? selectedCheckOut : ""; %>
 <% const dateQuery = checkIn && checkOut ? `?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}` : ""; %>
+<%
+  const cardImg = (listing.images && listing.images.length) ? listing.images[0] : listing.image;
+  const cardImgUrl = (typeof cardImg === "object" && cardImg !== null) ? (cardImg.url || "") : (cardImg || "");
+  const safeCardUrl = cardImgUrl.trim() || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e";
+%>
 <article class="listing-card" data-price="<%= listing.price %>">
   <div class="listing-card-media">
     <a href="/listings/<%= listing._id %><%= dateQuery %>" aria-label="View <%= listing.title %>">
-      <img src="<%= listing.images && listing.images.length ? listing.images[0] : listing.image %>" alt="<%= listing.title %>" class="listing-card-image" loading="lazy" />
+      <img src="<%= safeCardUrl %>" alt="<%= listing.title %>" class="listing-card-image" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1507525428034-b723cf961d3e';" />
     </a>
     <button class="wishlist-toggle <%= isFavorite ? "is-saved" : "" %>" type="button" data-wishlist-toggle data-listing-id="<%= listing._id %>" data-logged-in="<%= currentUser ? "true" : "false" %>" aria-pressed="<%= isFavorite %>" aria-label="<%= isFavorite ? "Remove from wishlist" : "Add to wishlist" %>">
       <i class="fa-<%= isFavorite ? "solid" : "regular" %> fa-heart"></i>

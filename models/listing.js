@@ -28,11 +28,29 @@ const listingSchema = new Schema({
 	},
 	description: { type: String, trim: true, maxlength: 4000 },
 	image: {
-		type: String,
-		default: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-		set: (value) => value === "" ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" : value,
+		type: Schema.Types.Mixed,
+		default: {
+			url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+			filename: "listingimage",
+		},
+		set: (value) => {
+			if (!value) {
+				return {
+					url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+					filename: "listingimage",
+				};
+			}
+			if (typeof value === "string") {
+				const trimmed = value.trim();
+				return trimmed ? { url: trimmed, filename: "" } : {
+					url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+					filename: "listingimage",
+				};
+			}
+			return value;
+		},
 	},
-	images: { type: [String], default: [] },
+	images: { type: [Schema.Types.Mixed], default: [] },
 	price: { type: Number, required: true, min: 1, max: 10000000 },
 	location: { type: String, required: true, trim: true, maxlength: 120 },
 	country: { type: String, required: true, trim: true, maxlength: 120 },

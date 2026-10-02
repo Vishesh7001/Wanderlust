@@ -23,7 +23,11 @@ router.put("/me", requireLogin, profileImage, async (req, res) => {
     const user = await User.findById(req.user._id);
     user.name = name;
     user.email = email;
-    if (req.file) user.profileImage = `/uploads/${req.file.filename}`;
+    if (req.file) {
+      user.profileImage = (req.file.path && /^https?:\/\//i.test(req.file.path))
+        ? req.file.path
+        : `/uploads/${req.file.filename}`;
+    }
     await user.save();
     res.json({ user: serializeUser(user), message: "Profile updated." });
   } catch (error) {
