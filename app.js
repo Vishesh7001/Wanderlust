@@ -19,10 +19,12 @@ const wishlistApiRoutes = require("./routes/wishlist.js");
 const bookingApiRoutes = require("./routes/bookings.js");
 const paymentApiRoutes = require("./routes/payments.js");
 const hostBookingApiRoutes = require("./routes/hostBookings.js");
+const aiRoutes = require("./routes/ai.js");
 const Booking = require("./models/booking.js");
 const { attachUser, requirePageLogin } = require("./middleware/auth.js");
 const { listingImages } = require("./middleware/uploads.js");
 const { buildFilters, getListingInput, validationMessage } = require("./utils/listingUtils.js");
+const { createTravelSearchService, normalizeConversation, TravelSearchError } = require("./services/ai/travelSearchService.js");
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const PORT = Number(process.env.PORT) || 8080;
@@ -65,6 +67,9 @@ app.use("/api/wishlist", wishlistApiRoutes);
 app.use("/api/bookings", bookingApiRoutes);
 app.use("/api/payments", paymentApiRoutes);
 app.use("/api/host/bookings", hostBookingApiRoutes);
+app.use("/api/ai", aiRoutes);
+
+const travelSearch = createTravelSearchService();
 
 app.get("/", (req, res) => {
   res.redirect("/listings");
@@ -86,6 +91,37 @@ app.get("/signup", (req, res) => {
 
 app.get("/profile", requirePageLogin, (req, res) => {
   res.render("users/profile.ejs");
+});
+
+app.get("/ai-assistant", (req, res) => {
+  res.render("ai-assistant.ejs", { conversation: [], allListings: [], result: null, error: "", previousMessage: "" });
+});
+
+app.post("/ai-assistant", async (req, res) => {
+  const message = typeof req.body.message === "string" ? req.body.message.trim() : "";
+  let conversation = [];
+  let result = null;
+  let errorMessage = "";
+  let status = 200;
+
+  try {
+    conversation = normalizeConversation(req.body.conversation);
+    result = await travelSearch.search(message, conversation);
+    conversation = [...conversation, { role: "user", content: message }, { role: "assistant", content: result.message }].slice(-8);
+  } catch (error) {
+    status = error instanceof TravelSearchError ? error.status : 500;
+    errorMessage = error instanceof TravelSearchError
+      ? error.message
+      : "Unable to search stays right now. Please try again.";
+  }
+
+  res.status(status).render("ai-assistant.ejs", {
+    conversation,
+    allListings: result?.listings || [],
+    result,
+    error: errorMessage,
+    previousMessage: result ? "" : message,
+  });
 });
 
 app.get("/my-listings", requirePageLogin, async (req, res) => {

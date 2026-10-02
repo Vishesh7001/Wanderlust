@@ -33,7 +33,9 @@ function buildFilters(params) {
 
   const amenities = Array.isArray(params.amenities) ? params.amenities : String(params.amenities || "").split(",");
   const selectedAmenities = amenities.map((value) => String(value).trim().slice(0, 60)).filter(Boolean).slice(0, 20);
-  if (selectedAmenities.length) query.amenities = { $all: selectedAmenities };
+  if (selectedAmenities.length) {
+    query.amenities = { $all: selectedAmenities.map((amenity) => new RegExp(escapeRegex(amenity), "i")) };
+  }
   return { query };
 }
 

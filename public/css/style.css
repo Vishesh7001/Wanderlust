@@ -1802,6 +1802,106 @@ span.flatpickr-weekday{
     text-decoration: none;
 }
 
+.ai-assistant-page{
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+.ai-assistant-intro{
+    color: #66736f;
+    font-size: 1.02rem;
+    margin: 0.65rem 0 0;
+}
+
+.ai-search-form{
+    padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.ai-search-form > label{
+    color: #52605f;
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.ai-search-form textarea{
+    background: #fbfaf7;
+    border: 1px solid #d7ddd8;
+    border-radius: 0.55rem;
+    box-sizing: border-box;
+    color: #24313a;
+    font: inherit;
+    line-height: 1.5;
+    min-height: 8rem;
+    padding: 0.8rem 0.9rem;
+    resize: vertical;
+    width: 100%;
+}
+
+.ai-search-form textarea:focus{
+    background: #ffffff;
+    border-color: #d95d39;
+    box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.12);
+    outline: none;
+}
+
+.ai-search-form textarea::placeholder{
+    color: #9ba49f;
+}
+
+.ai-conversation-turn{
+    background: #fbfaf7;
+    border-radius: 0.5rem;
+    color: #52605f;
+    line-height: 1.5;
+    margin: 0 0 0.6rem;
+    padding: 0.65rem 0.8rem;
+}
+
+.ai-conversation-assistant{
+    background: #fff0ed;
+}
+
+.ai-search-loading{
+    color: #66736f;
+    font-size: 0.88rem;
+    margin: 0.75rem 0 0;
+}
+
+.ai-results{
+    margin-top: 2rem;
+}
+
+.ai-response{
+    background: #ffffff;
+    border: 1px solid #e8e4dc;
+    border-radius: 0.85rem;
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+}
+
+.ai-response .form-eyebrow{
+    margin-bottom: 0.4rem;
+}
+
+.ai-response h2{
+    color: #24313a;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.45rem;
+    margin: 0 0 0.35rem;
+}
+
+.ai-response p{
+    color: #52605f;
+    margin: 0.35rem 0 0;
+}
+
+.ai-response .ai-availability-note{
+    color: #7a6255;
+    font-size: 0.88rem;
+}
+
 .listing-card-media{
     position: relative;
 }

@@ -1,0 +1,106 @@
+<% layout("layouts/boilerplate") %>
+<main class="listings-page ai-assistant-page">
+  <header class="listings-heading">
+    <div>
+      <p class="form-eyebrow"><i class="fa-solid fa-wand-magic-sparkles"></i> WanderLust AI</p>
+      <h1>Find a stay in your own words</h1>
+      <p class="ai-assistant-intro">Describe where you want to go, your budget, dates, or the details that matter. We’ll search real listings.</p>
+    </div>
+  </header>
+
+  <form class="listing-search ai-search-form" method="POST" action="/ai-assistant">
+    <% for (const turn of conversation) { %>
+      <p class="ai-conversation-turn ai-conversation-<%= turn.role %>"><strong><%= turn.role === "user" ? "You" : "WanderLust AI" %>:</strong> <%= turn.content %></p>
+    <% } %>
+    <label for="ai-search-message">What kind of stay are you looking for?</label>
+    <textarea id="ai-search-message" name="message" maxlength="1000" required placeholder="For example: Find me a peaceful place in Goa for 3 people under ₹5,000 a night with a swimming pool."><%= previousMessage || "" %></textarea>
+    <input type="hidden" name="conversation" value="<%= JSON.stringify(conversation) %>" />
+    <div class="search-actions">
+      <button class="form-submit search-submit" type="submit"><i class="fa-solid fa-wand-magic-sparkles"></i> Find my stay</button>
+      <a class="clear-filters" href="/ai-assistant">Start a new conversation</a>
+    </div>
+    <p class="ai-search-loading" role="status" hidden>Searching real listings...</p>
+  </form>
+
+  <% if (error) { %><p class="listing-state listing-state-error" role="alert"><%= error %></p><% } %>
+
+  <% if (result) { %>
+    <section class="ai-results" aria-live="polite">
+      <div class="ai-response">
+        <p class="form-eyebrow">Your search</p>
+        <h2><%= result.followUpQuestion ? "One quick question" : "AI search results" %></h2>
+        <p><%= result.message %></p>
+        <% if (!result.followUpQuestion && !result.availabilityChecked) { %>
+          <p class="ai-availability-note">Add check-in and check-out dates to check availability against existing bookings.</p>
+        <% } %>
+      </div>
+      <% if (result.listings.length) { %>
+        <p class="listing-results-count"><%= result.listings.length %> <%= result.listings.length === 1 ? "stay" : "stays" %> found</p>
+        <div class="listings-grid">
+          <% for (const listing of allListings) { %><%- include("listings/_card.ejs", { listing, selectedCheckIn: result.filters.checkIn || "", selectedCheckOut: result.filters.checkOut || "" }) %><% } %>
+        </div>
+      <% } else if (!result.followUpQuestion) { %>
+        <section class="listing-state listing-empty-state">
+          <i class="fa-regular fa-compass"></i>
+          <h2>No properties matched all your requirements</h2>
+          <p>Try increasing your budget, changing the dates, or removing a preference.</p>
+        </section>
+      <% } %>
+    </section>
+  <% } %>
+</main>
+
+<script>
+  const aiForm = document.querySelector(".ai-search-form");
+  aiForm?.addEventListener("submit", () => {
+    const button = aiForm.querySelector(".search-submit");
+    button.disabled = true;
+    button.lastChild.textContent = " Searching...";
+    aiForm.querySelector(".ai-search-loading").hidden = false;
+  });
+
+  document.querySelectorAll(".listing-card").forEach((card) => {
+    const basePrice = Number(card.dataset.price);
+    const priceValue = card.querySelector(".listing-price-value");
+    const priceBadge = card.querySelector(".listing-price-badge");
+    const button = card.querySelector(".tax-toggle");
+    button.addEventListener("click", () => {
+      const showingAfterTax = button.getAttribute("aria-pressed") === "true";
+      const priceRow = button.closest(".listing-price-row");
+      priceValue.textContent = Math.round(showingAfterTax ? basePrice : basePrice * 1.18).toLocaleString("en-IN");
+      button.textContent = showingAfterTax ? "After tax" : "Before tax";
+      button.setAttribute("aria-pressed", String(!showingAfterTax));
+      priceBadge.classList.toggle("tax-included", !showingAfterTax);
+      priceRow.classList.toggle("tax-included", !showingAfterTax);
+    });
+  });
+
+  document.querySelectorAll("[data-wishlist-toggle]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (button.dataset.loggedIn !== "true") {
+        if (window.confirm("Log in to save this stay to your wishlist?")) {
+          const next = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/login?next=${next}`;
+        }
+        return;
+      }
+      const wasSaved = button.getAttribute("aria-pressed") === "true";
+      button.disabled = true;
+      try {
+        const response = await fetch(`/api/wishlist/${button.dataset.listingId}`, { method: wasSaved ? "DELETE" : "POST" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to update wishlist.");
+        button.setAttribute("aria-pressed", String(!wasSaved));
+        button.setAttribute("aria-label", wasSaved ? "Add to wishlist" : "Remove from wishlist");
+        button.classList.toggle("is-saved", !wasSaved);
+        const heartIcon = button.querySelector("i");
+        heartIcon.classList.toggle("fa-solid", !wasSaved);
+        heartIcon.classList.toggle("fa-regular", wasSaved);
+      } catch (error) {
+        window.alert(error.message);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+</script>
