@@ -27,7 +27,7 @@
           </div>
           <div class="host-booking-state">
             <span class="booking-status status-<%= booking.bookingStatus.toLowerCase() %>"><%= booking.bookingStatus %></span>
-            <span class="payment-status"><%= booking.paymentStatus === "PAID" ? "TEST PAID" : booking.paymentStatus %></span>
+            <span class="payment-status"><%= booking.paymentStatus === "PAID" ? (booking.paymentProvider === "DEMO" ? "DEMO PAID" : "PAID") : booking.paymentStatus %></span>
             <a class="card-owner-link" href="/bookings/<%= booking._id %>">View booking</a>
           </div>
         </article>

@@ -109,14 +109,14 @@
         <strong id="booking-total"></strong>
         <button class="book-stay-button" id="book-stay-button" type="button" disabled>
           <i class="fa-solid fa-lock"></i>
-          Continue to test payment
+          Continue to demo payment
         </button>
       </div>
       <p class="booking-message" id="booking-message" role="status"></p>
       <dialog class="test-payment-dialog" id="test-payment-dialog" aria-labelledby="test-payment-title">
-        <button class="test-payment-close" id="test-payment-close" type="button" aria-label="Close test payment">×</button>
-        <p class="demo-payment-note">TEST PAYMENT · NO REAL MONEY</p>
-        <h2 id="test-payment-title">Payment</h2>
+        <button class="test-payment-close" id="test-payment-close" type="button" aria-label="Close demo payment">×</button>
+        <p class="demo-payment-note"><i class="fa-solid fa-flask"></i> DEMO PAYMENT MODE · NO REAL MONEY</p>
+        <h2 id="test-payment-title">Demo Checkout</h2>
         <p class="test-payment-property"><%= listing.title %></p>
         <div class="test-payment-breakdown">
           <span id="test-payment-nights">Stay</span><strong id="test-payment-subtotal"></strong>
@@ -125,10 +125,10 @@
           <span>Service fee</span><strong id="test-payment-service"></strong>
           <span class="test-payment-total-label">Total</span><strong class="test-payment-total" id="test-payment-total"></strong>
         </div>
-        <p class="test-payment-message" id="test-payment-message" role="status">Project payment simulation. No charge will be made.</p>
+        <p class="test-payment-message" id="test-payment-message" role="status">Demo payment simulation. No financial charge will be made.</p>
         <div class="test-payment-actions">
-          <button class="form-submit" id="test-payment-pay" type="button">Pay test amount</button>
-          <button class="delete-button" id="test-payment-fail" type="button">Simulate failure</button>
+          <button class="form-submit" id="test-payment-pay" type="button">Pay test amount (Simulate Success)</button>
+          <button class="delete-button" id="test-payment-fail" type="button">Simulate Failure</button>
           <button class="clear-filters" id="test-payment-cancel" type="button">Cancel</button>
         </div>
       </dialog>
@@ -394,10 +394,10 @@
         document.querySelector("#test-payment-cleaning").textContent = formatCurrency(selectedPrice.cleaningFee);
         document.querySelector("#test-payment-service").textContent = formatCurrency(selectedPrice.serviceFee);
         document.querySelector("#test-payment-total").textContent = formatCurrency(selectedPrice.totalPrice);
-        document.querySelector("#test-payment-pay").textContent = `Pay ${formatCurrency(selectedPrice.totalPrice)} (test)`;
-        document.querySelector("#test-payment-message").textContent = `TEST PAYMENT · No real money is charged. Test order ${result.order.id}`;
+        document.querySelector("#test-payment-pay").textContent = `Pay ${formatCurrency(selectedPrice.totalPrice)} (Simulate Success)`;
+        document.querySelector("#test-payment-message").textContent = `DEMO PAYMENT MODE · No real money is charged. Demo order ${result.order.id}`;
         testPaymentDialog.showModal();
-        bookingMessage.textContent = "Pending test booking created. It will be held for 15 minutes.";
+        bookingMessage.textContent = "Pending demo booking created. It will be held for 15 minutes.";
       } catch (error) {
         bookingMessage.textContent = error.message;
         bookingMessage.classList.add("booking-error");
@@ -410,7 +410,7 @@
       const actions = document.querySelector(".test-payment-actions");
       actions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
       const message = document.querySelector("#test-payment-message");
-      message.textContent = outcome === "success" ? "Processing test payment..." : outcome === "failure" ? "Processing simulated failure..." : "Cancelling test payment...";
+      message.textContent = outcome === "success" ? "Processing demo payment..." : outcome === "failure" ? "Processing simulated failure..." : "Cancelling demo payment...";
       try {
         const response = await fetch("/api/payments/verify", {
           method: "POST",
@@ -418,17 +418,17 @@
           body: JSON.stringify({ ...pendingTestOrder, outcome }),
         });
         const result = await response.json();
-        if (!response.ok) throw new Error(result.error || "Unable to process test payment.");
+        if (!response.ok) throw new Error(result.error || "Unable to process demo payment.");
         paymentResolved = true;
         if (result.success) {
-          message.textContent = `✓ Payment Successful · TEST PAYMENT · Transaction ID: ${result.paymentId}`;
-          bookingMessage.textContent = "Test payment complete. Booking confirmed.";
+          message.textContent = `✓ Payment Successful · DEMO PAYMENT MODE · Transaction ID: ${result.paymentId}`;
+          bookingMessage.textContent = "Demo payment complete. Booking confirmed.";
           window.setTimeout(() => { window.location.href = `/bookings/${result.bookingId}`; }, 900);
           return;
         }
         message.textContent = outcome === "cancel"
-          ? "Test payment cancelled. No money was charged and the booking is not confirmed."
-          : "Test payment failed. No money was charged and the booking is not confirmed.";
+          ? "Demo payment cancelled. No money was charged and the booking is not confirmed."
+          : "Demo payment failed. No money was charged and the booking is not confirmed.";
         bookingMessage.textContent = "Payment was not completed. Your booking has not been confirmed.";
         window.setTimeout(() => testPaymentDialog.close(), 1800);
       } catch (error) {

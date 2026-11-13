@@ -4,7 +4,7 @@ const Booking = require("../models/booking.js");
 const Listing = require("../models/listing.js");
 const { requireLogin } = require("../middleware/auth.js");
 const { calculatePrice, getGuestCount, getPaymentExpiresAt, getStay } = require("../utils/bookingUtils.js");
-const { createTestOrder, isMockPaymentEnabled } = require("../services/payment/mockPaymentService.js");
+const { createTestOrder, isMockPaymentEnabled, isDemoPaymentEnabled } = require("../services/payment/mockPaymentService.js");
 
 const router = express.Router();
 const activeStatuses = ["PENDING", "CONFIRMED"];
@@ -81,6 +81,7 @@ router.post("/", requireLogin, async (req, res) => {
       ...pricing,
       paymentExpiresAt,
       reservedNightKeys: stay.nightKeys,
+      paymentProvider: "DEMO",
     });
 
     await booking.save();
@@ -91,7 +92,8 @@ router.post("/", requireLogin, async (req, res) => {
       res.status(201).json({
         booking: serializeBooking(booking),
         order: { id: order.id, amount: order.amount, currency: order.currency },
-        paymentMode: "TEST PAYMENT - NO MONEY IS CHARGED",
+        paymentMode: "DEMO PAYMENT MODE - NO REAL MONEY IS CHARGED",
+        isDemo: true,
       });
     } catch (paymentError) {
       booking.bookingStatus = "CANCELLED";

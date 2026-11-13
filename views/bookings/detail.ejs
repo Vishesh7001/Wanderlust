@@ -2,7 +2,7 @@
 <main class="booking-details-page">
   <a class="back-link" href="/my-trips"><i class="fa-solid fa-arrow-left"></i> <%= isGuest ? "Back to My Trips" : "Back to host bookings" %></a>
   <header class="booking-details-heading">
-    <p class="form-eyebrow"><%= booking.paymentProvider === "DEMO" ? "TEST PAYMENT · NO MONEY CHARGED" : "Booking" %></p>
+    <p class="form-eyebrow"><%= booking.paymentProvider === "DEMO" ? "DEMO PAYMENT · NO MONEY CHARGED" : "Booking" %></p>
     <h1><%= booking.bookingStatus === "CONFIRMED" || booking.bookingStatus === "COMPLETED" ? "Booking Confirmed" : booking.bookingStatus === "PENDING" ? "Payment Pending" : "Booking " + booking.bookingStatus.toLowerCase() %></h1>
     <p>Booking ID <strong>#<%= booking._id.toString().slice(-8).toUpperCase() %></strong></p>
   </header>
@@ -26,8 +26,8 @@
         <div><dt>Guests</dt><dd><%= booking.guests %></dd></div>
         <div><dt>Nights</dt><dd><%= booking.nights %></dd></div>
         <div><dt>Booking status</dt><dd><%= booking.bookingStatus %></dd></div>
-        <div><dt>Payment status</dt><dd><%= booking.paymentStatus === "PAID" ? "TEST PAID" : booking.paymentStatus %></dd></div>
-        <% if (booking.paymentId) { %><div><dt>Test transaction</dt><dd><%= booking.paymentId %></dd></div><% } %>
+        <div><dt>Payment status</dt><dd><%= booking.paymentStatus === "PAID" ? (booking.paymentProvider === "DEMO" ? "DEMO PAID" : "PAID") : booking.paymentStatus %></dd></div>
+        <% if (booking.paymentId) { %><div><dt><%= booking.paymentProvider === "DEMO" ? "Demo transaction" : "Transaction ID" %></dt><dd><%= booking.paymentId %></dd></div><% } %>
         <div><dt>Created</dt><dd><%= booking.createdAt.toISOString().slice(0, 10) %></dd></div>
       </dl>
       <% if (isGuest && ["PENDING", "CONFIRMED"].includes(booking.bookingStatus) && booking.checkIn > new Date()) { %>
@@ -44,7 +44,7 @@
         <span>Service fee</span><strong>₹<%= Number(booking.serviceFee).toLocaleString("en-IN") %></strong>
       </div>
       <h2 class="booking-detail-total">Total · ₹<%= Number(booking.totalPrice).toLocaleString("en-IN") %></h2>
-      <% if (booking.paymentProvider === "DEMO") { %><p class="demo-payment-note">TEST PAYMENT. No real money was charged.</p><% } %>
+      <% if (booking.paymentProvider === "DEMO") { %><p class="demo-payment-note"><i class="fa-solid fa-flask"></i> DEMO PAYMENT MODE. No real money was charged.</p><% } %>
       <% if (isGuest) { %><a class="form-submit" href="/my-trips">View My Trips</a><% } %>
       <a class="clear-filters" href="/listings">Back to stays</a>
     </aside>

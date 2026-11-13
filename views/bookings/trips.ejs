@@ -38,7 +38,7 @@
                   <span>Total <strong>₹<%= Number(booking.totalPrice).toLocaleString("en-IN") %></strong></span>
                 </div>
                 <div class="trip-card-footer">
-                  <span class="payment-status">Payment: <strong><%= booking.paymentStatus === "PAID" ? "TEST PAID" : booking.paymentStatus %></strong></span>
+                  <span class="payment-status">Payment: <strong><%= booking.paymentStatus === "PAID" ? (booking.paymentProvider === "DEMO" ? "DEMO PAID" : "PAID") : booking.paymentStatus %></strong></span>
                   <div class="trip-actions">
                     <a class="edit-button" href="/bookings/<%= booking._id %>">View booking</a>
                     <% if (["PENDING", "CONFIRMED"].includes(booking.bookingStatus) && booking.checkIn > new Date()) { %>
